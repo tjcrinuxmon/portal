@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M3 4h15l4 4v18H3V4z' stroke='%23582E73' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M18 4v4h4' stroke='%23582E73' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='23' cy='23' r='9' fill='%23D5007F'/%3E%3Cpath d='M19.5 23L22 25.5L27 19.5' stroke='white' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>INE · DEAJ — Portal de Sistemas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'ine-purple':       '#582E73',
+              'ine-purple-dark':  '#3D1F52',
+              'ine-purple-xdark': '#2A1239',
+              'ine-purple-light': '#7040A0',
+              'ine-magenta':      '#E4007B',
+              'ine-magenta-dark': '#C4006A',
+              'ine-bg':           '#F8F5FB',
+              'ine-bg-hover':     '#F3EDF9',
+              'ine-border':       '#E2D9EE',
+              'ine-border-light': '#EDE8F4',
+              'ine-text':         '#1A1219',
+              'ine-muted':        '#6B5F78',
+              'ine-dim':          '#A090B0',
+            },
+            fontFamily: { sans: ['Roboto', 'system-ui', 'sans-serif'] },
+          }
+        }
+      }
+    </script>
+    <style>
+      * { box-sizing: border-box; }
+      body { font-family: 'Roboto', system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+      input, select, textarea, button { font-family: 'Roboto', system-ui, sans-serif; }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: #EDE8F4; }
+      ::-webkit-scrollbar-thumb { background: #C4A8DC; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #9B7BB8; }
+      @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+      .fade-in { animation: fadeIn 0.2s ease-out; }
+      .btn-ine {
+        background: #D5007F; color: white; padding: 10px 20px; border-radius: 6px;
+        font-size: 13px; font-weight: 600; box-shadow: 0 2px 6px rgba(213,0,127,.30);
+        transition: background .18s, box-shadow .18s, transform .18s;
+        border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      }
+      .btn-ine:hover { background: #B5006B; box-shadow: 0 4px 14px rgba(213,0,127,.40); transform: translateY(-1px); }
+      .btn-ine:active { background: #8F0054; transform: translateY(0); }
+      .btn-ine:disabled { opacity: 0.45; transform: none; cursor: not-allowed; box-shadow: none; }
+      .btn-outline {
+        background: white; color: #D5007F; border: 1.5px solid #D5007F;
+        padding: 9px 19px; border-radius: 6px; font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all .18s; display: inline-flex; align-items: center; gap: 6px;
+      }
+      .btn-outline:hover { background: rgba(213,0,127,.06); }
+      .btn-ghost {
+        background: transparent; color: #6B5F78; border: none; padding: 6px 12px;
+        border-radius: 6px; font-size: 13px; cursor: pointer; transition: all .15s;
+        display: inline-flex; align-items: center; gap: 6px;
+      }
+      .btn-ghost:hover { background: #F3EDF9; color: #582E73; }
+      .ine-card {
+        background: white; border: 1.5px solid #E2D9EE;
+        border-radius: 10px; box-shadow: 0 2px 8px rgba(88,46,115,.07);
+      }
+      .ine-input {
+        background: white; border: 1.5px solid #E2D9EE; border-radius: 6px;
+        font-size: 14px; padding: 10px 14px; width: 100%; font-family: inherit;
+        color: #1A1219; transition: border-color .15s, box-shadow .15s; outline: none;
+      }
+      .ine-input:focus { border-color: #582E73; box-shadow: 0 0 0 3px rgba(88,46,115,.13); }
+      .ine-input::placeholder { color: #A090B0; }
+      .ine-label { font-size: 12px; font-weight: 700; color: #575453; display: block; margin-bottom: 8px; }
+    </style>
+  </head>
+  <body class="bg-ine-bg text-ine-text">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
