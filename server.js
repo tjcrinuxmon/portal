@@ -69,11 +69,12 @@ const TAREAS_SECRET  = process.env.TAREAS_SECRET   || 'ine_portal_sso_tareas_202
 const OFICIOS_SECRET = process.env.OFICIOS_SECRET  || 'ine_portal_sso_oficios_2026'
 const DILIG_SECRET   = process.env.DILIG_SECRET    || 'ine_portal_sso_dilig_2026'
 
-/* App URLs — todos pasan por el gateway en :3000 */
+/* App URLs — todos pasan por el gateway */
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const APP_URLS = {
-  tareas:      process.env.URL_TAREAS      || 'http://localhost:3000/tareas/',
-  oficios:     process.env.URL_OFICIOS     || 'http://localhost:3000/oficios',
-  diligencias: process.env.URL_DILIGENCIAS || 'http://localhost:3000/diligencias',
+  tareas:      process.env.URL_TAREAS      || `${BASE_URL}/tareas/`,
+  oficios:     process.env.URL_OFICIOS     || `${BASE_URL}/oficios`,
+  diligencias: process.env.URL_DILIGENCIAS || `${BASE_URL}/diligencias`,
 }
 
 app.use(cors())
