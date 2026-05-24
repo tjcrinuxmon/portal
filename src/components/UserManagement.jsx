@@ -1,170 +1,298 @@
-import React, { useState, useEffect } from 'react'
-import { getUsuarios, createUsuario, updateUsuario, deleteUsuario } from '../api.js'
+import React, { useState, useEffect, useCallback } from 'react'
+import { getUsuarios, createUsuario, updateUsuario } from '../api.js'
 
-const DIRS_TAREAS = [
-  '','asuntos_laborales','contratos_convenios','enlace_interinstitucional',
-  'asesoria_juridica','normatividad','direccion_ejecutiva',
+const DIRECCIONES = [
+  { key: 'instruccion_recusal',             label: 'Dir. de Instrucción Recursal',       color: '#3B82F6' },
+  { key: 'contratos_convenios',             label: 'Dir. de Contratos y Convenios',      color: '#10B981' },
+  { key: 'asuntos_hasl',                    label: 'Dir. de Asuntos HASL',               color: '#F59E0B' },
+  { key: 'normatividad_consulta',           label: 'Dir. de Normatividad y Consulta',    color: '#8B5CF6' },
+  { key: 'asuntos_laborales',               label: 'Dir. de Asuntos Laborales',          color: '#EF4444' },
+  { key: 'servicios_legales',               label: 'Dir. de Servicios Legales',          color: '#14B8A6' },
+  { key: 'secretaria_particular',           label: 'Secretaría Particular',              color: '#EC4899' },
+  { key: 'coordinacion_gestion_documental', label: 'Coord. de Gestión Documental',       color: '#6366F1' },
+  { key: 'enlace_interinstitucional',       label: 'Líder de Enlace Interinstitucional', color: '#F97316' },
 ]
-const ROLES_TAREAS      = ['admin','ejecutiva','director','subdirector','secretaria']
-const ROLES_OFICIOS     = ['admin','usuario']
-const ROLES_DILIGENCIAS = ['admin','usuario','notificador']
+
+const ROLES_TAREAS = [
+  { key: 'admin',       label: 'Administrador',         color: '#7C3AED' },
+  { key: 'ejecutiva',   label: 'Directora Ejecutiva',   color: '#E4007B' },
+  { key: 'director',    label: 'Director/a de Área',    color: '#582E73' },
+  { key: 'subdirector', label: 'Subdirector/a',         color: '#2563EB' },
+  { key: 'secretaria',  label: 'Secretaría Particular', color: '#EC4899' },
+]
+
+const ROLES_DILIGENCIAS = [
+  { key: 'admin',       label: 'Administrador' },
+  { key: 'usuario',     label: 'Usuario' },
+  { key: 'notificador', label: 'Notificador' },
+]
+
+const ROLES_OFICIOS = [
+  { key: 'admin',   label: 'Administrador' },
+  { key: 'usuario', label: 'Usuario' },
+]
+
+// Groups — users with tareas access are bucketed by rol_tareas; others fall to the last group
+const GROUPS = [
+  { key: 'admin',       label: 'Administrador',         color: '#7C3AED' },
+  { key: 'ejecutiva',   label: 'Directora Ejecutiva',   color: '#E4007B' },
+  { key: 'director',    label: 'Director/a de Área',    color: '#582E73' },
+  { key: 'subdirector', label: 'Subdirector/a',         color: '#2563EB' },
+  { key: 'secretaria',  label: 'Secretaría Particular', color: '#EC4899' },
+  { key: null,          label: 'Sin acceso a Tareas',   color: '#6B7280' },
+]
+
+const needsDireccion = (rol) => rol === 'director' || rol === 'subdirector'
+const needsPuesto    = (rol) => rol === 'subdirector'
+const dirCfg         = (key) => DIRECCIONES.find(d => d.key === key)
+
+// ── Toggle ───────────────────────────────────────────────────────────────────
 
 function Toggle({ checked, onChange, label }) {
   return (
-    <label className="flex items-center gap-2 cursor-pointer select-none">
+    <label className="flex items-center gap-2.5 cursor-pointer select-none">
       <div onClick={() => onChange(!checked)}
         className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-        style={{ background: checked ? '#582E73' : '#E2D9EE', cursor:'pointer' }}>
+        style={{ background: checked ? '#582E73' : '#D1C4E2', cursor: 'pointer' }}>
         <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
           style={{ transform: checked ? 'translateX(16px)' : 'translateX(0)' }} />
       </div>
-      <span className="text-sm font-medium text-ine-text">{label}</span>
+      <span className="text-sm font-semibold text-ine-text">{label}</span>
     </label>
   )
 }
 
-function UserForm({ initial, onSave, onClose }) {
-  const e = initial
-  const [f, setF] = useState({
-    nombre: e?.nombre || '', email: e?.email || '', password: '',
-    rol: e?.rol || 'usuario',
-    acceso_tareas: !!e?.acceso_tareas, rol_tareas: e?.rol_tareas || 'director', direccion_tareas: e?.direccion_tareas || '',
-    acceso_oficios: !!e?.acceso_oficios, rol_oficios: e?.rol_oficios || 'usuario',
-    acceso_diligencias: !!e?.acceso_diligencias, rol_diligencias: e?.rol_diligencias || 'usuario', area_diligencias: e?.area_diligencias || '',
-  })
-  const [saving, setSaving] = useState(false)
-  const [err,    setErr]    = useState(null)
+// ── Small app badge ───────────────────────────────────────────────────────────
+
+function AppBadge({ label, color }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
+      style={{ background: color + '18', color }}>
+      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
+      {label}
+    </span>
+  )
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+
+const EMPTY = {
+  nombre: '', email: '', password: '',
+  rol: 'usuario', puesto: '', activo: true,
+  acceso_tareas: false, rol_tareas: 'director', direccion_tareas: 'instruccion_recusal',
+  acceso_diligencias: false, rol_diligencias: 'usuario', area_diligencias: '',
+  acceso_oficios: false, rol_oficios: 'usuario',
+}
+
+function UserModal({ user, onSaved, onClose }) {
+  const isEdit = !!user
+  const [f, setF] = useState(isEdit ? {
+    nombre:            user.nombre           || '',
+    email:             user.email            || '',
+    password:          '',
+    rol:               user.rol              || 'usuario',
+    puesto:            user.puesto           || '',
+    activo:            user.activo           ?? true,
+    acceso_tareas:     !!user.acceso_tareas,
+    rol_tareas:        user.rol_tareas       || 'director',
+    direccion_tareas:  user.direccion_tareas || 'instruccion_recusal',
+    acceso_diligencias: !!user.acceso_diligencias,
+    rol_diligencias:   user.rol_diligencias  || 'usuario',
+    area_diligencias:  user.area_diligencias || '',
+    acceso_oficios:    !!user.acceso_oficios,
+    rol_oficios:       user.rol_oficios      || 'usuario',
+  } : { ...EMPTY })
+  const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState(null)
+  const [showPass, setShowPass] = useState(false)
   const set = (k, v) => setF(p => ({ ...p, [k]: v }))
 
-  const handleSave = async () => {
-    if (!f.nombre || !f.email) { setErr('Nombre y correo son obligatorios'); return }
-    if (!initial && !f.password) { setErr('La contraseña es obligatoria'); return }
-    setSaving(true); setErr(null)
+  const roleColor = f.acceso_tareas
+    ? (ROLES_TAREAS.find(r => r.key === f.rol_tareas)?.color ?? '#6B7280')
+    : '#6B7280'
+
+  const handleSubmit = async () => {
+    if (!f.nombre.trim() || !f.email.trim()) { setError('Nombre y correo son obligatorios'); return }
+    if (!isEdit && !f.password) { setError('La contraseña es obligatoria'); return }
+    setSaving(true); setError(null)
     try {
       const data = { ...f }
       if (!data.password) delete data.password
-      if (initial) await updateUsuario(initial.id, data)
-      else         await createUsuario(data)
-      onSave()
+      if (!needsDireccion(f.rol_tareas)) data.direccion_tareas = ''
+      if (!needsPuesto(f.rol_tareas))    data.puesto = ''
+      if (isEdit) await updateUsuario(user.id, data)
+      else        await createUsuario(data)
+      onSaved()
     } catch (e) {
-      setErr(e?.response?.data?.error || 'Error al guardar')
+      setError(e?.response?.data?.error || 'Error al guardar')
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4"
-      style={{ background:'rgba(42,18,57,.55)' }}>
-      <div className="ine-card w-full max-w-2xl max-h-[88vh] flex flex-col fade-in"
-        style={{ boxShadow:'0 20px 60px rgba(88,46,115,.28)' }}>
-        <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-          style={{ borderBottom:'1px solid #E2D9EE' }}>
-          <h2 className="font-bold text-base text-ine-purple">
-            {initial ? 'Editar usuario' : 'Nuevo usuario'}
-          </h2>
-          <button onClick={onClose} className="text-ine-dim hover:text-ine-purple text-xl leading-none px-2">×</button>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{ background: 'rgba(42,18,57,.45)', backdropFilter: 'blur(4px)' }}>
+      <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden fade-in"
+        style={{ border: '1.5px solid #E2D9EE', boxShadow: '0 20px 60px rgba(88,46,115,.20)' }}>
+
+        {/* Color bar */}
+        <div className="h-1 flex-shrink-0" style={{ background: roleColor }} />
+
+        {/* Header */}
+        <div className="px-6 py-4 flex items-center justify-between flex-shrink-0"
+          style={{ borderBottom: '1px solid #EDE8F4' }}>
+          <h3 className="text-base font-bold text-ine-text">
+            {isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}
+          </h3>
+          <button onClick={onClose}
+            className="p-1.5 rounded-lg text-ine-dim hover:text-ine-purple hover:bg-ine-bg transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
-          {err && (
-            <div className="rounded-lg px-4 py-3 text-sm" style={{ background:'rgba(220,38,38,.07)', border:'1px solid rgba(220,38,38,.22)', color:'#B91C1C' }}>
-              {err}
+          {error && (
+            <div className="flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm"
+              style={{ background: 'rgba(220,38,38,.07)', border: '1px solid rgba(220,38,38,.22)', color: '#B91C1C' }}>
+              {error}
             </div>
           )}
 
-          {/* Datos básicos */}
-          <div>
-            <p className="text-xs font-bold text-ine-muted uppercase tracking-wider mb-3">Datos del usuario</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="ine-label">Nombre completo <span style={{ color:'#B91C1C' }}>*</span></label>
-                <input className="ine-input" value={f.nombre} onChange={e => set('nombre', e.target.value)} />
-              </div>
-              <div>
-                <label className="ine-label">Correo electrónico <span style={{ color:'#B91C1C' }}>*</span></label>
-                <input type="email" className="ine-input" value={f.email} onChange={e => set('email', e.target.value)} />
-              </div>
-              <div>
-                <label className="ine-label">{initial ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}</label>
-                <input type="password" className="ine-input" value={f.password} onChange={e => set('password', e.target.value)} placeholder={initial ? '••••••••' : ''} />
-              </div>
-              <div>
-                <label className="ine-label">Rol en el portal</label>
-                <select className="ine-input" value={f.rol} onChange={e => set('rol', e.target.value)}>
-                  <option value="usuario">Usuario</option>
-                  <option value="admin">Administrador</option>
-                </select>
+          {/* ── Datos generales ─────────────────────────────────────── */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="ine-label">Nombre completo <span style={{ color: '#B91C1C' }}>*</span></label>
+              <input className="ine-input" value={f.nombre}
+                onChange={e => set('nombre', e.target.value)} placeholder="Nombre completo" />
+            </div>
+            <div>
+              <label className="ine-label">Correo electrónico <span style={{ color: '#B91C1C' }}>*</span></label>
+              <input type="email" className="ine-input" value={f.email}
+                onChange={e => set('email', e.target.value)} placeholder="correo@ine.mx" />
+            </div>
+            <div>
+              <label className="ine-label">
+                Contraseña
+                {isEdit
+                  ? <span className="text-ine-dim font-normal normal-case"> (vacío = sin cambio)</span>
+                  : <span style={{ color: '#B91C1C' }}> *</span>}
+              </label>
+              <div className="relative">
+                <input type={showPass ? 'text' : 'password'} className="ine-input" value={f.password}
+                  onChange={e => set('password', e.target.value)} placeholder="••••••••"
+                  style={{ paddingRight: '36px' }} />
+                <button type="button" onClick={() => setShowPass(s => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ine-dim hover:text-ine-purple transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {showPass
+                      ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      : <>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </>
+                    }
+                  </svg>
+                </button>
               </div>
             </div>
-          </div>
-
-          {/* Acceso Tareas */}
-          <div className="rounded-lg p-4" style={{ background:'#F8F5FB', border:'1.5px solid #E2D9EE' }}>
-            <div className="flex items-center justify-between mb-3">
-              <Toggle checked={f.acceso_tareas} onChange={v => set('acceso_tareas', v)} label="Acceso a Sistema de Tareas" />
+            <div>
+              <label className="ine-label">Rol en el portal</label>
+              <select className="ine-input" value={f.rol} onChange={e => set('rol', e.target.value)}>
+                <option value="usuario">Usuario</option>
+                <option value="admin">Administrador</option>
+              </select>
             </div>
-            {f.acceso_tareas && (
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <div>
-                  <label className="ine-label">Rol en Tareas</label>
-                  <select className="ine-input" value={f.rol_tareas} onChange={e => set('rol_tareas', e.target.value)}>
-                    {ROLES_TAREAS.map(r => <option key={r} value={r}>{r || '—'}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="ine-label">Dirección</label>
-                  <select className="ine-input" value={f.direccion_tareas} onChange={e => set('direccion_tareas', e.target.value)}>
-                    {DIRS_TAREAS.map(d => <option key={d} value={d}>{d || '— General —'}</option>)}
-                  </select>
-                </div>
+            {isEdit && (
+              <div className="col-span-2 flex items-center justify-between rounded-lg px-4 py-3"
+                style={{ background: '#F8F5FB', border: '1.5px solid #E2D9EE' }}>
+                <span className="text-sm font-medium text-ine-text">Cuenta activa</span>
+                <Toggle checked={!!f.activo} onChange={v => set('activo', v)} label={f.activo ? 'Activo' : 'Inactivo'} />
               </div>
             )}
           </div>
 
-          {/* Acceso Diligencias */}
-          <div className="rounded-lg p-4" style={{ background:'#F0F9FF', border:'1.5px solid #BAE6FD' }}>
-            <div className="flex items-center justify-between mb-3">
-              <Toggle checked={f.acceso_diligencias} onChange={v => set('acceso_diligencias', v)} label="Acceso a Sistema de Diligencias" />
-            </div>
+          {/* ── Acceso: Tareas ───────────────────────────────────────── */}
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F8F5FB', border: '1.5px solid #E2D9EE' }}>
+            <Toggle checked={f.acceso_tareas} onChange={v => set('acceso_tareas', v)} label="Acceso al Sistema de Tareas" />
+            {f.acceso_tareas && (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className={needsDireccion(f.rol_tareas) ? '' : 'col-span-2'}>
+                  <label className="ine-label">Rol en Tareas</label>
+                  <select className="ine-input" value={f.rol_tareas} onChange={e => set('rol_tareas', e.target.value)}>
+                    {ROLES_TAREAS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                  </select>
+                </div>
+                {needsDireccion(f.rol_tareas) && (
+                  <div>
+                    <label className="ine-label">Dirección de Área</label>
+                    <select className="ine-input" value={f.direccion_tareas} onChange={e => set('direccion_tareas', e.target.value)}>
+                      {DIRECCIONES.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
+                    </select>
+                  </div>
+                )}
+                {needsPuesto(f.rol_tareas) && (
+                  <div className="col-span-2">
+                    <label className="ine-label">Puesto / Subdirección</label>
+                    <input className="ine-input" value={f.puesto} onChange={e => set('puesto', e.target.value)}
+                      placeholder="Ej. Subdirector/a de Resoluciones y Análisis" />
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* ── Acceso: Diligencias ──────────────────────────────────── */}
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F0F9FF', border: '1.5px solid #BAE6FD' }}>
+            <Toggle checked={f.acceso_diligencias} onChange={v => set('acceso_diligencias', v)} label="Acceso al Sistema de Diligencias" />
             {f.acceso_diligencias && (
-              <div className="grid grid-cols-2 gap-3 mt-2">
+              <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="ine-label">Rol en Diligencias</label>
                   <select className="ine-input" value={f.rol_diligencias} onChange={e => set('rol_diligencias', e.target.value)}>
-                    {ROLES_DILIGENCIAS.map(r => <option key={r} value={r}>{r || '—'}</option>)}
+                    {ROLES_DILIGENCIAS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="ine-label">Área</label>
-                  <input className="ine-input" value={f.area_diligencias} onChange={e => set('area_diligencias', e.target.value)} placeholder="Ej. DAL" />
+                  <input className="ine-input" value={f.area_diligencias} onChange={e => set('area_diligencias', e.target.value)}
+                    placeholder="Ej. DAL" />
                 </div>
               </div>
             )}
-          </div>
+          </section>
 
-          {/* Acceso Oficios */}
-          <div className="rounded-lg p-4" style={{ background:'#F0FDF4', border:'1.5px solid #BBF7D0' }}>
-            <div className="flex items-center justify-between mb-3">
-              <Toggle checked={f.acceso_oficios} onChange={v => set('acceso_oficios', v)} label="Acceso a Generador de Oficios" />
-            </div>
+          {/* ── Acceso: Oficios ──────────────────────────────────────── */}
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F0FDF4', border: '1.5px solid #BBF7D0' }}>
+            <Toggle checked={f.acceso_oficios} onChange={v => set('acceso_oficios', v)} label="Acceso al Generador de Oficios" />
             {f.acceso_oficios && (
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <div>
-                  <label className="ine-label">Rol en Oficios</label>
-                  <select className="ine-input" value={f.rol_oficios} onChange={e => set('rol_oficios', e.target.value)}>
-                    {ROLES_OFICIOS.map(r => <option key={r} value={r}>{r || '—'}</option>)}
-                  </select>
-                </div>
+              <div className="pt-1">
+                <label className="ine-label">Rol en Oficios</label>
+                <select className="ine-input w-1/2" value={f.rol_oficios} onChange={e => set('rol_oficios', e.target.value)}>
+                  {ROLES_OFICIOS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                </select>
               </div>
             )}
-          </div>
+          </section>
         </div>
 
-        <div className="flex gap-3 justify-end px-6 py-4 flex-shrink-0" style={{ borderTop:'1px solid #E2D9EE' }}>
-          <button className="btn-outline" onClick={onClose}>Cancelar</button>
-          <button className="btn-ine" onClick={handleSave} disabled={saving}>
-            {saving ? 'Guardando…' : initial ? 'Guardar cambios' : 'Crear usuario'}
+        {/* Footer */}
+        <div className="flex gap-3 justify-end px-6 py-4 flex-shrink-0"
+          style={{ borderTop: '1px solid #E2D9EE', background: '#F8F5FB' }}>
+          <button className="btn-outline" onClick={onClose} disabled={saving}>Cancelar</button>
+          <button className="btn-ine" onClick={handleSubmit} disabled={saving}>
+            {saving
+              ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {isEdit ? 'Guardar cambios' : 'Crear usuario'}
+                </>
+            }
           </button>
         </div>
       </div>
@@ -172,125 +300,223 @@ function UserForm({ initial, onSave, onClose }) {
   )
 }
 
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function UserManagement({ onBack }) {
   const [users,    setUsers]    = useState([])
   const [loading,  setLoading]  = useState(true)
-  const [editing,  setEditing]  = useState(null)
-  const [showForm, setShowForm] = useState(false)
-  const [deleting, setDeleting] = useState(null)
+  const [modal,    setModal]    = useState(null)  // null | 'create' | user-object
+  const [toggling, setToggling] = useState(null)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try { setUsers(await getUsuarios()) } catch {}
     setLoading(false)
-  }
-  useEffect(() => { load() }, [])
+  }, [])
+  useEffect(() => { load() }, [load])
 
-  const handleDelete = async () => {
-    await deleteUsuario(deleting.id)
-    setDeleting(null); load()
+  const handleToggleActive = async (u) => {
+    setToggling(u.id)
+    try {
+      await updateUsuario(u.id, { activo: !u.activo })
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, activo: !x.activo } : x))
+    } catch {}
+    setToggling(null)
   }
 
-  const AppBadge = ({ ok, label, color }) => ok
-    ? <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: color + '20', color }}>{label}</span>
-    : null
+  const grouped = GROUPS.map(g => ({
+    ...g,
+    items: g.key === null
+      ? users.filter(u => !u.acceso_tareas)
+      : users.filter(u => u.acceso_tareas && u.rol_tareas === g.key),
+  })).filter(g => g.items.length > 0)
 
   return (
     <div className="min-h-screen bg-ine-bg flex flex-col">
       <header className="bg-white flex items-center px-6 h-14 flex-shrink-0"
-        style={{ borderBottom:'1px solid #E2D9EE', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
-        <button onClick={onBack} className="btn-ghost mr-3">
+        style={{ borderBottom: '1px solid #E2D9EE', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+        <button onClick={onBack} className="btn-ghost mr-4">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Volver al portal
+          Portal
         </button>
-        <span className="text-sm font-bold text-ine-purple">Gestión de Usuarios</span>
+        <div>
+          <p className="text-sm font-bold text-ine-purple leading-none">Gestión de Usuarios</p>
+          <p className="text-xs text-ine-muted mt-0.5">
+            {users.length} usuario{users.length !== 1 ? 's' : ''} registrados en el sistema
+          </p>
+        </div>
         <div className="flex-1" />
-        <button className="btn-ine" onClick={() => { setEditing(null); setShowForm(true) }}>
-          + Nuevo usuario
+        <button className="btn-ine" onClick={() => setModal('create')}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo Usuario
         </button>
       </header>
 
       <main className="flex-1 p-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {loading ? (
-            <div className="text-center py-20 text-ine-muted">Cargando usuarios…</div>
+            <div className="flex flex-col items-center justify-center py-24">
+              <div className="w-10 h-10 border-4 rounded-full animate-spin mb-3"
+                style={{ borderColor: '#E2D9EE', borderTopColor: '#582E73' }} />
+              <p className="text-ine-muted text-sm">Cargando usuarios…</p>
+            </div>
           ) : (
-            <div className="ine-card overflow-hidden">
-              <table className="w-full text-sm" style={{ borderCollapse:'separate', borderSpacing:0 }}>
-                <thead>
-                  <tr>
-                    {['Usuario','Tareas','Diligencias','Oficios','Estado',''].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-bold text-ine-muted bg-ine-bg"
-                        style={{ borderBottom:'1.5px solid #E2D9EE' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(u => (
-                    <tr key={u.id} style={{ borderBottom:'1px solid #EDE8F4' }}
-                      onMouseEnter={e => e.currentTarget.style.background='#F8F5FB'}
-                      onMouseLeave={e => e.currentTarget.style.background=''}>
-                      <td className="px-4 py-3">
-                        <p className="font-semibold text-ine-text">{u.nombre}</p>
-                        <p className="text-xs text-ine-muted">{u.email}</p>
-                        {u.rol === 'admin' && <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background:'#EDE8F4', color:'#582E73' }}>ADMIN</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        {u.acceso_tareas
-                          ? <div><AppBadge ok color="#582E73" label={u.rol_tareas} />{u.direccion_tareas && <p className="text-xs text-ine-muted mt-0.5">{u.direccion_tareas}</p>}</div>
-                          : <span className="text-ine-dim text-xs">—</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        {u.acceso_diligencias
-                          ? <div><AppBadge ok color="#0369A1" label={u.rol_diligencias} />{u.area_diligencias && <p className="text-xs text-ine-muted mt-0.5">{u.area_diligencias}</p>}</div>
-                          : <span className="text-ine-dim text-xs">—</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        {u.acceso_oficios
-                          ? <AppBadge ok color="#047857" label={u.rol_oficios} />
-                          : <span className="text-ine-dim text-xs">—</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                          style={u.activo ? { background:'#D1FAE5', color:'#065F46' } : { background:'#FEE2E2', color:'#B91C1C' }}>
-                          {u.activo ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-1">
-                          <button onClick={() => { setEditing(u); setShowForm(true) }}
-                            className="btn-ghost text-xs px-2 py-1">✏️</button>
-                          <button onClick={() => setDeleting(u)}
-                            className="btn-ghost text-xs px-2 py-1 hover:text-red-600">🗑</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-6">
+              {grouped.map(({ key, label, color, items }) => (
+                <div key={key ?? 'none'}>
+                  {/* Group header */}
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+                    <h3 className="text-sm font-bold text-ine-text">{label}</h3>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={{ background: color + '18', color }}>
+                      {items.length}
+                    </span>
+                    <div className="flex-1 h-px bg-ine-border" />
+                  </div>
+
+                  {/* Group table */}
+                  <div className="ine-card overflow-hidden">
+                    <table className="w-full">
+                      <thead>
+                        <tr style={{ background: '#F8F5FB', borderBottom: '1px solid #EDE8F4' }}>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Nombre</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Correo</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden md:table-cell">Dirección de Área</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Diligencias</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Oficios</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Estado</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-bold text-ine-muted uppercase tracking-wide">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((u, i) => {
+                          const dir = dirCfg(u.direccion_tareas)
+                          return (
+                            <tr key={u.id}
+                              style={{ borderBottom: i < items.length - 1 ? '1px solid #EDE8F4' : undefined }}
+                              onMouseEnter={e => e.currentTarget.style.background = '#F8F5FB'}
+                              onMouseLeave={e => e.currentTarget.style.background = ''}>
+
+                              {/* Nombre */}
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                                    style={{ background: u.activo ? color : '#9CA3AF' }}>
+                                    {u.nombre.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-sm font-semibold text-ine-text">{u.nombre}</span>
+                                      {u.rol === 'admin' && (
+                                        <span className="text-xs px-1.5 py-0.5 rounded font-bold"
+                                          style={{ background: '#EDE8F4', color: '#582E73' }}>ADMIN</span>
+                                      )}
+                                    </div>
+                                    {needsPuesto(u.rol_tareas) && u.puesto && (
+                                      <p className="text-xs text-ine-muted leading-tight mt-0.5">{u.puesto}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Correo */}
+                              <td className="px-4 py-3">
+                                <span className="text-sm text-ine-muted">{u.email}</span>
+                              </td>
+
+                              {/* Dirección */}
+                              <td className="px-4 py-3 hidden md:table-cell">
+                                {dir && needsDireccion(u.rol_tareas) ? (
+                                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
+                                    style={{ background: dir.color + '15', color: dir.color }}>
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: dir.color }} />
+                                    {dir.label}
+                                  </span>
+                                ) : <span className="text-xs text-ine-dim">—</span>}
+                              </td>
+
+                              {/* Diligencias */}
+                              <td className="px-4 py-3 hidden sm:table-cell">
+                                {u.acceso_diligencias
+                                  ? <AppBadge label={u.rol_diligencias} color="#0369A1" />
+                                  : <span className="text-xs text-ine-dim">—</span>}
+                              </td>
+
+                              {/* Oficios */}
+                              <td className="px-4 py-3 hidden sm:table-cell">
+                                {u.acceso_oficios
+                                  ? <AppBadge label={u.rol_oficios} color="#047857" />
+                                  : <span className="text-xs text-ine-dim">—</span>}
+                              </td>
+
+                              {/* Estado */}
+                              <td className="px-4 py-3">
+                                <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                  style={u.activo
+                                    ? { background: '#D1FAE5', color: '#065F46' }
+                                    : { background: '#FEE2E2', color: '#B91C1C' }}>
+                                  {u.activo ? 'Activo' : 'Inactivo'}
+                                </span>
+                              </td>
+
+                              {/* Acciones */}
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button onClick={() => setModal(u)}
+                                    className="p-1.5 rounded-lg transition-colors text-ine-dim hover:text-ine-purple hover:bg-ine-bg"
+                                    title="Editar">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleToggleActive(u)}
+                                    disabled={toggling === u.id}
+                                    className="p-1.5 rounded-lg transition-colors"
+                                    title={u.activo ? 'Desactivar usuario' : 'Activar usuario'}
+                                    style={{ color: u.activo ? '#D97706' : '#059669' }}
+                                    onMouseEnter={e => e.currentTarget.style.background = u.activo ? 'rgba(217,119,6,.08)' : 'rgba(5,150,105,.08)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = ''}>
+                                    {toggling === u.id
+                                      ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                      : u.activo
+                                        ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                          </svg>
+                                        : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                          </svg>
+                                    }
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
       </main>
 
-      {showForm && (
-        <UserForm initial={editing} onSave={() => { setShowForm(false); setEditing(null); load() }} onClose={() => { setShowForm(false); setEditing(null) }} />
-      )}
-
-      {deleting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background:'rgba(42,18,57,.55)' }}>
-          <div className="ine-card p-7 max-w-sm w-full text-center fade-in">
-            <p className="text-3xl mb-3">⚠️</p>
-            <p className="font-bold mb-1">¿Eliminar usuario?</p>
-            <p className="text-ine-muted text-sm mb-5">{deleting.nombre} — {deleting.email}</p>
-            <div className="flex gap-3 justify-center">
-              <button className="btn-outline" onClick={() => setDeleting(null)}>Cancelar</button>
-              <button className="btn-ine" style={{ background:'#DC2626', boxShadow:'none' }} onClick={handleDelete}>Eliminar</button>
-            </div>
-          </div>
-        </div>
+      {modal !== null && (
+        <UserModal
+          user={modal === 'create' ? null : modal}
+          onSaved={() => { setModal(null); load() }}
+          onClose={() => setModal(null)}
+        />
       )}
     </div>
   )

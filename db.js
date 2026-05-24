@@ -27,10 +27,14 @@ db.exec(`
     rol_diligencias     TEXT    DEFAULT 'usuario',
     area_diligencias    TEXT    DEFAULT '',
 
+    puesto              TEXT    DEFAULT '',
+
     activo              INTEGER DEFAULT 1,
     created_at          TEXT    DEFAULT (datetime('now'))
   )
 `)
+
+try { db.exec("ALTER TABLE usuarios ADD COLUMN puesto TEXT DEFAULT ''") } catch (_) {}
 
 /* Seed inicial */
 const exists = db.prepare('SELECT COUNT(*) as n FROM usuarios').get()
