@@ -73,8 +73,8 @@ const DILIG_SECRET   = process.env.DILIG_SECRET    || 'ine_portal_sso_dilig_2026
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const APP_URLS = {
   tareas:      process.env.URL_TAREAS      || `${BASE_URL}/tareas/`,
-  oficios:     process.env.URL_OFICIOS     || `${BASE_URL}/api/of/auth/sso`,
-  diligencias: process.env.URL_DILIGENCIAS || `${BASE_URL}/api/dil/auth/sso`,
+  oficios:     process.env.URL_OFICIOS     || `${BASE_URL}/oficios`,
+  diligencias: process.env.URL_DILIGENCIAS || `${BASE_URL}/diligencias`,
 }
 
 app.use(cors())
