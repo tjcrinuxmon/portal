@@ -3,11 +3,13 @@ import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import Database from 'better-sqlite3'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { existsSync } from 'fs'
 import db from './db.js'
+import { sendWelcomeEmail } from './mailer.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -170,26 +172,37 @@ app.get('/api/usuarios', auth, adminOnly, (_req, res) => {
   res.json(rows.map(u => ({ ...u, acceso_tareas: !!u.acceso_tareas, acceso_oficios: !!u.acceso_oficios, acceso_diligencias: !!u.acceso_diligencias, activo: !!u.activo })))
 })
 
-app.post('/api/usuarios', auth, adminOnly, (req, res) => {
-  const { nombre, email, password, rol = 'usuario', puesto = '',
+app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
+  const { nombre, email, rol = 'usuario', puesto = '',
     acceso_tareas = false, rol_tareas = '', direccion_tareas = '',
     acceso_oficios = false, rol_oficios = 'usuario',
     acceso_diligencias = false, rol_diligencias = 'usuario', area_diligencias = '' } = req.body
-  if (!nombre || !email || !password) return res.status(400).json({ error: 'Faltan campos obligatorios' })
+  if (!nombre || !email) return res.status(400).json({ error: 'Faltan campos obligatorios' })
   try {
-    const hash = bcrypt.hashSync(password, 10)
+    const tmpPassword = crypto.randomBytes(12).toString('base64url')
+    const hash = bcrypt.hashSync(tmpPassword, 10)
+    const resetToken = crypto.randomBytes(32).toString('hex')
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     const r = db.prepare(`
       INSERT INTO usuarios (nombre,email,password_hash,rol,puesto,
         acceso_tareas,rol_tareas,direccion_tareas,
         acceso_oficios,rol_oficios,
-        acceso_diligencias,rol_diligencias,area_diligencias)
-      VALUES (?,?,?,?,?, ?,?,?, ?,?, ?,?,?)
+        acceso_diligencias,rol_diligencias,area_diligencias,
+        reset_token,reset_token_expires)
+      VALUES (?,?,?,?,?, ?,?,?, ?,?, ?,?,?, ?,?)
     `).run(nombre, email.toLowerCase(), hash, rol, puesto,
            acceso_tareas ? 1 : 0, rol_tareas, direccion_tareas,
            acceso_oficios ? 1 : 0, rol_oficios,
-           acceso_diligencias ? 1 : 0, rol_diligencias, area_diligencias)
+           acceso_diligencias ? 1 : 0, rol_diligencias, area_diligencias,
+           resetToken, expires)
     const created = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(r.lastInsertRowid)
     syncToTareas(created)
+    const resetUrl = `${BASE_URL}?token=${resetToken}`
+    try {
+      await sendWelcomeEmail({ nombre, email: email.toLowerCase(), resetUrl })
+    } catch (mailErr) {
+      console.error('Error enviando correo de bienvenida:', mailErr.message)
+    }
     res.json({ id: r.lastInsertRowid })
   } catch (e) {
     if (e.message?.includes('UNIQUE')) return res.status(409).json({ error: 'El correo ya existe' })
@@ -228,6 +241,26 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
 app.delete('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   if (Number(req.params.id) === req.user.id) return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' })
   db.prepare('DELETE FROM usuarios WHERE id = ?').run(req.params.id)
+  res.json({ ok: true })
+})
+
+/* ── Reset de contraseña ────────────────────────────────────────────────── */
+app.get('/api/auth/reset-password/:token', (req, res) => {
+  const u = db.prepare('SELECT id, nombre, email, reset_token_expires FROM usuarios WHERE reset_token = ?').get(req.params.token)
+  if (!u) return res.status(400).json({ error: 'Enlace inválido o expirado' })
+  if (new Date(u.reset_token_expires) < new Date()) return res.status(400).json({ error: 'El enlace ha expirado' })
+  res.json({ nombre: u.nombre, email: u.email })
+})
+
+app.post('/api/auth/reset-password', (req, res) => {
+  const { token, password } = req.body
+  if (!token || !password) return res.status(400).json({ error: 'Faltan datos' })
+  if (password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' })
+  const u = db.prepare('SELECT id, reset_token_expires FROM usuarios WHERE reset_token = ?').get(token)
+  if (!u) return res.status(400).json({ error: 'Enlace inválido o expirado' })
+  if (new Date(u.reset_token_expires) < new Date()) return res.status(400).json({ error: 'El enlace ha expirado' })
+  const hash = bcrypt.hashSync(password, 10)
+  db.prepare('UPDATE usuarios SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?').run(hash, u.id)
   res.json({ ok: true })
 })
 

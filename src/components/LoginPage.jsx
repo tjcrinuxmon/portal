@@ -112,19 +112,6 @@ export default function LoginPage({ onLogin }) {
             </button>
           </form>
 
-          <div className="mt-5 p-3 rounded-lg" style={{ background:'#F8F5FB', border:'1px solid #E2D9EE' }}>
-            <p className="text-xs font-bold text-ine-muted mb-2 uppercase tracking-wide">Accesos iniciales</p>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="font-mono font-semibold" style={{ color:'#7C3AED' }}>admin@ine.mx</span>
-                <span className="text-ine-dim">Admin1234!</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-mono font-semibold" style={{ color:'#E4007B' }}>anahi.silva@ine.mx</span>
-                <span className="text-ine-dim">Ejecutiva1234!</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
       <p className="mt-5 text-xs text-ine-dim">© {new Date().getFullYear()} Instituto Nacional Electoral — Uso interno</p>
