@@ -11,37 +11,95 @@ const transporter = nodemailer.createTransport({
   tls: { rejectUnauthorized: false },
 })
 
+function header() {
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#582E73">
+      <tr>
+        <td style="padding:16px 28px;">
+          <span style="color:#ffffff;font-size:18px;font-weight:bold;font-family:Arial,sans-serif;letter-spacing:-0.5px;">INE &middot; DEAJ</span>
+          <span style="color:rgba(255,255,255,0.6);font-size:12px;font-family:Arial,sans-serif;padding-left:10px;">Portal de Sistemas</span>
+        </td>
+      </tr>
+    </table>`
+}
+
+function footer() {
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:16px 28px;border-top:1px solid #E2D9EE;">
+          <p style="margin:0;font-size:11px;color:#aaaaaa;font-family:Arial,sans-serif;">
+            Instituto Nacional Electoral &mdash; Direcci&oacute;n Ejecutiva de Asuntos Jur&iacute;dicos
+          </p>
+        </td>
+      </tr>
+    </table>`
+}
+
 export async function sendResetCode({ nombre, email, code }) {
+  const digits = String(code).split('')
+  const digitCells = digits.map(d =>
+    `<td width="36" height="46" align="center" valign="middle"
+        style="width:36px;height:46px;background-color:#F8F5FB;border:1px solid #C4B0DA;font-size:26px;font-weight:bold;font-family:Courier New,monospace;color:#582E73;text-align:center;">
+      ${d}
+    </td>
+    <td width="6" style="width:6px;"></td>`
+  ).join('')
+
   await transporter.sendMail({
     from: `"Portal DEAJ" <${process.env.EMAIL_FROM}>`,
     to: email,
     subject: 'Portal DEAJ — Código para restablecer contraseña',
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-        <div style="background:#582E73;padding:16px 24px;border-radius:8px 8px 0 0">
-          <span style="color:#fff;font-size:20px;font-weight:900;letter-spacing:-.5px">INE · DEAJ</span>
-          <span style="color:rgba(255,255,255,.6);font-size:12px;margin-left:10px">Portal de Sistemas</span>
-        </div>
-        <div style="border:1.5px solid #E2D9EE;border-top:none;border-radius:0 0 8px 8px;padding:28px 24px">
-          <h2 style="color:#2A1239;font-size:17px;margin:0 0 8px">Hola, ${nombre}</h2>
-          <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 24px">
-            Recibimos una solicitud para restablecer la contraseña de tu cuenta en el <strong>Portal DEAJ</strong>.<br/>
-            Usa el siguiente código de verificación:
-          </p>
-          <div style="text-align:center;margin:0 0 24px">
-            <span style="display:inline-block;background:#F8F5FB;border:2px dashed #C4B0DA;border-radius:12px;padding:18px 36px;font-size:38px;font-weight:900;letter-spacing:12px;color:#582E73;font-family:monospace">
-              ${code}
-            </span>
-          </div>
-          <p style="color:#888;font-size:12px;margin:0 0 8px;line-height:1.5">
-            Este código es válido por <strong>15 minutos</strong>.
-            Si no solicitaste este cambio, ignora este correo — tu contraseña no se modificará.
-          </p>
-          <hr style="border:none;border-top:1px solid #EDE8F4;margin:20px 0" />
-          <p style="color:#aaa;font-size:11px;margin:0">Instituto Nacional Electoral — Dirección Ejecutiva de Asuntos Jurídicos</p>
-        </div>
-      </div>
-    `,
+    html: `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#F4F0F8;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F4F0F8">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table width="540" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border:1px solid #E2D9EE;">
+        <tr><td>${header()}</td></tr>
+        <tr>
+          <td style="padding:28px 28px 8px 28px;">
+            <p style="margin:0 0 8px 0;font-size:16px;font-weight:bold;color:#2A1239;font-family:Arial,sans-serif;">
+              Hola, ${nombre}
+            </p>
+            <p style="margin:0 0 24px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">
+              Recibimos una solicitud para restablecer la contrase&ntilde;a de tu cuenta en el
+              <strong>Portal DEAJ</strong>. Usa el siguiente c&oacute;digo de verificaci&oacute;n:
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding:0 28px 24px 28px;">
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                ${digitCells}
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 28px 28px 28px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF8E7">
+              <tr>
+                <td style="padding:12px 16px;border-left:3px solid #F59E0B;">
+                  <p style="margin:0;font-size:12px;color:#92400E;font-family:Arial,sans-serif;line-height:1.5;">
+                    Este c&oacute;digo es v&aacute;lido por <strong>15 minutos</strong>.
+                    Si no solicitaste este cambio, ignora este correo.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td>${footer()}</td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`,
   })
 }
 
@@ -50,28 +108,56 @@ export async function sendWelcomeEmail({ nombre, email, resetUrl }) {
     from: `"Portal DEAJ" <${process.env.EMAIL_FROM}>`,
     to: email,
     subject: 'Bienvenido al Portal DEAJ — Establece tu contraseña',
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-        <div style="background:#582E73;padding:16px 24px;border-radius:8px 8px 0 0">
-          <span style="color:#fff;font-size:20px;font-weight:900;letter-spacing:-.5px">INE · DEAJ</span>
-          <span style="color:rgba(255,255,255,.6);font-size:12px;margin-left:10px">Portal de Sistemas</span>
-        </div>
-        <div style="border:1.5px solid #E2D9EE;border-top:none;border-radius:0 0 8px 8px;padding:28px 24px">
-          <h2 style="color:#2A1239;font-size:17px;margin:0 0 12px">Hola, ${nombre}</h2>
-          <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 20px">
-            Tu cuenta en el <strong>Portal de Sistemas DEAJ</strong> ha sido creada por un administrador.
-            Para activarla y establecer tu contraseña, haz clic en el siguiente botón:
-          </p>
-          <a href="${resetUrl}" style="display:inline-block;background:#582E73;color:#fff;text-decoration:none;padding:12px 28px;border-radius:7px;font-size:14px;font-weight:700">
-            Establecer contraseña
-          </a>
-          <p style="color:#888;font-size:12px;margin:20px 0 0;line-height:1.5">
-            Este enlace es válido por <strong>24 horas</strong>. Si no solicitaste esta cuenta, puedes ignorar este correo.
-          </p>
-          <hr style="border:none;border-top:1px solid #EDE8F4;margin:20px 0" />
-          <p style="color:#aaa;font-size:11px;margin:0">Instituto Nacional Electoral — Dirección Ejecutiva de Asuntos Jurídicos</p>
-        </div>
-      </div>
-    `,
+    html: `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#F4F0F8;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F4F0F8">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table width="540" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border:1px solid #E2D9EE;">
+        <tr><td>${header()}</td></tr>
+        <tr>
+          <td style="padding:28px 28px 20px 28px;">
+            <p style="margin:0 0 8px 0;font-size:16px;font-weight:bold;color:#2A1239;font-family:Arial,sans-serif;">
+              Hola, ${nombre}
+            </p>
+            <p style="margin:0 0 24px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">
+              Tu cuenta en el <strong>Portal de Sistemas DEAJ</strong> ha sido creada por un administrador.
+              Para activarla y establecer tu contrase&ntilde;a, haz clic en el siguiente bot&oacute;n:
+            </p>
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td bgcolor="#582E73" style="background-color:#582E73;padding:12px 28px;">
+                  <a href="${resetUrl}"
+                    style="color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold;font-family:Arial,sans-serif;display:block;">
+                    Establecer contrase&ntilde;a
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:20px 0 0 0;font-size:12px;color:#888888;font-family:Arial,sans-serif;line-height:1.5;">
+              Si el bot&oacute;n no funciona, copia y pega este enlace en tu navegador:<br>
+              <a href="${resetUrl}" style="color:#582E73;word-break:break-all;">${resetUrl}</a>
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF8E7" style="margin-top:16px;">
+              <tr>
+                <td style="padding:12px 16px;border-left:3px solid #F59E0B;">
+                  <p style="margin:0;font-size:12px;color:#92400E;font-family:Arial,sans-serif;line-height:1.5;">
+                    Este enlace es v&aacute;lido por <strong>24 horas</strong>.
+                    Si no esperabas esta cuenta, puedes ignorar este correo.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td>${footer()}</td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`,
   })
 }

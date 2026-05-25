@@ -273,15 +273,22 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
 app.post('/api/auth/verify-code', (req, res) => {
   const { email, code } = req.body
+  log(`VERIFY CODE → email=${email} code=${code}`)
   if (!email || !code) return res.status(400).json({ error: 'Faltan datos' })
   const u = db.prepare('SELECT id, reset_code, reset_code_expires FROM usuarios WHERE email = ?').get(email.trim().toLowerCase())
-  if (!u || u.reset_code !== String(code)) return res.status(400).json({ error: 'Código incorrecto' })
-  if (new Date(u.reset_code_expires) < new Date()) return res.status(400).json({ error: 'El código ha expirado' })
-  // Código válido: generar reset_token para el paso de nueva contraseña
-  const token = crypto.randomBytes(32).toString('hex')
+  if (!u || u.reset_code !== String(code)) {
+    log(`VERIFY CODE FAIL → código incorrecto o usuario no encontrado`)
+    return res.status(400).json({ error: 'Código incorrecto' })
+  }
+  if (new Date(u.reset_code_expires) < new Date()) {
+    log(`VERIFY CODE FAIL → código expirado`)
+    return res.status(400).json({ error: 'El código ha expirado' })
+  }
+  const resetTok = crypto.randomBytes(32).toString('hex')
   const tokenExpires = new Date(Date.now() + 30 * 60 * 1000).toISOString()
-  db.prepare('UPDATE usuarios SET reset_token = ?, reset_token_expires = ?, reset_code = NULL, reset_code_expires = NULL WHERE id = ?').run(token, tokenExpires, u.id)
-  res.json({ token })
+  db.prepare('UPDATE usuarios SET reset_token = ?, reset_token_expires = ?, reset_code = NULL, reset_code_expires = NULL WHERE id = ?').run(resetTok, tokenExpires, u.id)
+  log(`VERIFY CODE OK → reset_token generado para ${email}`)
+  res.json({ token: resetTok })
 })
 
 /* ── Reset de contraseña ────────────────────────────────────────────────── */
@@ -294,13 +301,15 @@ app.get('/api/auth/reset-password/:token', (req, res) => {
 
 app.post('/api/auth/reset-password', (req, res) => {
   const { token, password } = req.body
+  log(`RESET PASSWORD → token=${token ? token.slice(0,8) + '...' : 'VACÍO'} pass_len=${password?.length}`)
   if (!token || !password) return res.status(400).json({ error: 'Faltan datos' })
   if (password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' })
   const u = db.prepare('SELECT id, reset_token_expires FROM usuarios WHERE reset_token = ?').get(token)
-  if (!u) return res.status(400).json({ error: 'Enlace inválido o expirado' })
-  if (new Date(u.reset_token_expires) < new Date()) return res.status(400).json({ error: 'El enlace ha expirado' })
+  if (!u) { log(`RESET PASSWORD FAIL → token no encontrado en DB`); return res.status(400).json({ error: 'Enlace inválido o expirado' }) }
+  if (new Date(u.reset_token_expires) < new Date()) { log(`RESET PASSWORD FAIL → token expirado`); return res.status(400).json({ error: 'El enlace ha expirado' }) }
   const hash = bcrypt.hashSync(password, 10)
   db.prepare('UPDATE usuarios SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?').run(hash, u.id)
+  log(`RESET PASSWORD OK → usuario id=${u.id} contraseña actualizada`)
   res.json({ ok: true })
 })
 

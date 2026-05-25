@@ -118,6 +118,7 @@ export default function ForgotPassword({ onBack }) {
       setStep('password')
     } catch (err) {
       setError(err?.response?.data?.error || 'Código incorrecto o expirado')
+    } finally {
       setLoading(false)
     }
   }
