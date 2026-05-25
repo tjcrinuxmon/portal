@@ -37,6 +37,8 @@ db.exec(`
 try { db.exec("ALTER TABLE usuarios ADD COLUMN puesto TEXT DEFAULT ''") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_token TEXT") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_token_expires TEXT") } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code TEXT") } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code_expires TEXT") } catch (_) {}
 
 /* Seed inicial */
 const exists = db.prepare('SELECT COUNT(*) as n FROM usuarios').get()

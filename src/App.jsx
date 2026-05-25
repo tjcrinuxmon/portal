@@ -3,6 +3,7 @@ import LoginPage      from './components/LoginPage.jsx'
 import Portal         from './components/Portal.jsx'
 import UserManagement from './components/UserManagement.jsx'
 import ResetPassword  from './components/ResetPassword.jsx'
+import ForgotPassword from './components/ForgotPassword.jsx'
 import { getToken, getUser, setAuth, clearAuth } from './auth.js'
 
 function getResetToken() {
@@ -28,7 +29,10 @@ export default function App() {
 
   if (resetToken) return <ResetPassword token={resetToken} onDone={handleResetDone} />
 
-  if (!token || !user) return <LoginPage onLogin={handleLogin} />
+  if (!token || !user) {
+    if (view === 'forgot') return <ForgotPassword onBack={() => setView('portal')} />
+    return <LoginPage onLogin={handleLogin} onForgot={() => setView('forgot')} />
+  }
 
   if (view === 'users' && user.rol === 'admin')
     return <UserManagement onBack={() => setView('portal')} />

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { login } from '../api.js'
 import BrandLogo from './BrandLogo.jsx'
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage({ onLogin, onForgot }) {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState(null)
@@ -101,6 +101,12 @@ export default function LoginPage({ onLogin }) {
               </div>
             </div>
 
+            <div className="flex justify-end">
+              <button type="button" onClick={onForgot}
+                className="text-xs font-semibold hover:underline transition-colors" style={{ color:'#582E73' }}>
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
             <button type="submit" disabled={loading} className="btn-ine w-full justify-center mt-2" style={{ padding:'12px 24px' }}>
               {loading
                 ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Verificando...</>

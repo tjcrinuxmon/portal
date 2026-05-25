@@ -7,9 +7,16 @@ import crypto from 'crypto'
 import Database from 'better-sqlite3'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { existsSync } from 'fs'
+import { existsSync, appendFileSync } from 'fs'
 import db from './db.js'
-import { sendWelcomeEmail } from './mailer.js'
+import { sendWelcomeEmail, sendResetCode } from './mailer.js'
+
+const LOG_FILE = join(dirname(fileURLToPath(import.meta.url)), 'portal.log')
+function log(msg) {
+  const line = `[${new Date().toISOString()}] ${msg}\n`
+  process.stdout.write(line)
+  appendFileSync(LOG_FILE, line)
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -200,8 +207,9 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
     const resetUrl = `${BASE_URL}?token=${resetToken}`
     try {
       await sendWelcomeEmail({ nombre, email: email.toLowerCase(), resetUrl })
+      log(`MAIL OK → bienvenida enviada a ${email}`)
     } catch (mailErr) {
-      console.error('Error enviando correo de bienvenida:', mailErr.message)
+      log(`MAIL ERROR → ${email} | ${mailErr.message} | código: ${mailErr.code || 'n/a'} | respuesta: ${mailErr.response || 'n/a'}`)
     }
     res.json({ id: r.lastInsertRowid })
   } catch (e) {
@@ -242,6 +250,38 @@ app.delete('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   if (Number(req.params.id) === req.user.id) return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' })
   db.prepare('DELETE FROM usuarios WHERE id = ?').run(req.params.id)
   res.json({ ok: true })
+})
+
+/* ── Recuperación de contraseña (forgot password) ───────────────────────── */
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body
+  if (!email) return res.status(400).json({ error: 'Ingresa tu correo' })
+  const u = db.prepare('SELECT id, nombre, email, activo FROM usuarios WHERE email = ?').get(email.trim().toLowerCase())
+  // Respuesta genérica para no revelar si el correo existe
+  if (!u || !u.activo) return res.json({ ok: true })
+  const code = String(Math.floor(100000 + Math.random() * 900000))
+  const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString()
+  db.prepare('UPDATE usuarios SET reset_code = ?, reset_code_expires = ? WHERE id = ?').run(code, expires, u.id)
+  try {
+    await sendResetCode({ nombre: u.nombre, email: u.email, code })
+    log(`RESET CODE OK → código enviado a ${u.email}`)
+  } catch (e) {
+    log(`RESET CODE ERROR → ${u.email} | ${e.message}`)
+  }
+  res.json({ ok: true })
+})
+
+app.post('/api/auth/verify-code', (req, res) => {
+  const { email, code } = req.body
+  if (!email || !code) return res.status(400).json({ error: 'Faltan datos' })
+  const u = db.prepare('SELECT id, reset_code, reset_code_expires FROM usuarios WHERE email = ?').get(email.trim().toLowerCase())
+  if (!u || u.reset_code !== String(code)) return res.status(400).json({ error: 'Código incorrecto' })
+  if (new Date(u.reset_code_expires) < new Date()) return res.status(400).json({ error: 'El código ha expirado' })
+  // Código válido: generar reset_token para el paso de nueva contraseña
+  const token = crypto.randomBytes(32).toString('hex')
+  const tokenExpires = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+  db.prepare('UPDATE usuarios SET reset_token = ?, reset_token_expires = ?, reset_code = NULL, reset_code_expires = NULL WHERE id = ?').run(token, tokenExpires, u.id)
+  res.json({ token })
 })
 
 /* ── Reset de contraseña ────────────────────────────────────────────────── */

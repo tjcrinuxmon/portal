@@ -22,3 +22,5 @@ export const updateUsuario      = (id, d)            => api.put(`/usuarios/${id}
 export const deleteUsuario      = (id)               => api.delete(`/usuarios/${id}`).then(r => r.data)
 export const validateResetToken = (token)            => api.get(`/auth/reset-password/${token}`).then(r => r.data)
 export const resetPassword      = (token, password)  => api.post('/auth/reset-password', { token, password }).then(r => r.data)
+export const forgotPassword     = (email)            => api.post('/auth/forgot-password', { email }).then(r => r.data)
+export const verifyResetCode    = (email, code)      => api.post('/auth/verify-code', { email, code }).then(r => r.data)
