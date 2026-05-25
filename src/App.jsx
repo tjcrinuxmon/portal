@@ -35,7 +35,7 @@ export default function App() {
   }
 
   if (view === 'users' && user.rol === 'admin')
-    return <UserManagement onBack={() => setView('portal')} />
+    return <UserManagement onBack={() => setView('portal')} me={user} />
 
   return (
     <Portal

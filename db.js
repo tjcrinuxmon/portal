@@ -40,6 +40,15 @@ try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_token_expires TEXT") } catc
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code TEXT") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code_expires TEXT") } catch (_) {}
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS subdirecciones (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    direccion_key TEXT NOT NULL,
+    nombre        TEXT NOT NULL,
+    activo        INTEGER NOT NULL DEFAULT 1
+  )
+`)
+
 /* Seed inicial */
 const exists = db.prepare('SELECT COUNT(*) as n FROM usuarios').get()
 if (exists.n === 0) {

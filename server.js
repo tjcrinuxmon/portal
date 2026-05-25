@@ -246,6 +246,29 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   res.json({ ok: true })
 })
 
+/* ── Subdirecciones ─────────────────────────────────────────────────────── */
+app.get('/api/subdirecciones', auth, (_req, res) => {
+  res.json(db.prepare('SELECT * FROM subdirecciones WHERE activo = 1 ORDER BY direccion_key, nombre').all())
+})
+app.post('/api/subdirecciones', auth, adminOnly, (req, res) => {
+  const { direccion_key, nombre } = req.body
+  if (!direccion_key || !nombre?.trim()) return res.status(400).json({ error: 'Faltan campos' })
+  try {
+    const r = db.prepare('INSERT INTO subdirecciones (direccion_key, nombre) VALUES (?, ?)').run(direccion_key, nombre.trim())
+    res.json({ id: r.lastInsertRowid })
+  } catch { res.status(500).json({ error: 'Error al crear' }) }
+})
+app.put('/api/subdirecciones/:id', auth, adminOnly, (req, res) => {
+  const { nombre } = req.body
+  if (!nombre?.trim()) return res.status(400).json({ error: 'Falta el nombre' })
+  db.prepare('UPDATE subdirecciones SET nombre = ? WHERE id = ?').run(nombre.trim(), req.params.id)
+  res.json({ ok: true })
+})
+app.delete('/api/subdirecciones/:id', auth, adminOnly, (req, res) => {
+  db.prepare('UPDATE subdirecciones SET activo = 0 WHERE id = ?').run(req.params.id)
+  res.json({ ok: true })
+})
+
 app.delete('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   if (Number(req.params.id) === req.user.id) return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' })
   db.prepare('DELETE FROM usuarios WHERE id = ?').run(req.params.id)
