@@ -9,7 +9,7 @@ console.log('──────────────────────�
 console.log('Host :', process.env.EMAIL_HOST)
 console.log('Port :', process.env.EMAIL_PORT)
 console.log('User :', process.env.EMAIL_USER)
-console.log('Pass :', process.env.EMAIL_PASS ? `${'*'.repeat(process.env.EMAIL_PASS.length)} (${process.env.EMAIL_PASS.length} chars)` : '⚠️  vacía')
+console.log('Pass :', process.env.EMAIL_PASS || '⚠️  vacía')
 console.log('Para :', TO)
 console.log('─────────────────────────────────────')
 
