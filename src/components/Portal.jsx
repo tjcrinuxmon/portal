@@ -33,8 +33,8 @@ const APPS = [
   },
   {
     key: 'oficios',
-    title: 'SiCoDEAJ',
-    desc: 'Sistema de Control Documental DEAJ — oficios, opiniones, dictámenes y certificaciones.',
+    title: 'Módulo de Gestión Documental',
+    desc: 'Generación y control correlativo de oficios, opiniones, dictámenes y certificaciones.',
     color: '#047857',
     bg: '#F0FDF4',
     border: '#BBF7D0',
