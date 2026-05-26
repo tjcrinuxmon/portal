@@ -276,7 +276,7 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
     syncToDiligencias(created)
     const resetUrl = `${BASE_URL}?token=${resetToken}`
     try {
-      await sendWelcomeEmail({ nombre, email: email.toLowerCase(), resetUrl })
+      await sendWelcomeEmail({ nombre, email: email.toLowerCase() })
       log(`MAIL OK → bienvenida enviada a ${email}`)
     } catch (mailErr) {
       log(`MAIL ERROR → ${email} | ${mailErr.message} | código: ${mailErr.code || 'n/a'} | respuesta: ${mailErr.response || 'n/a'}`)

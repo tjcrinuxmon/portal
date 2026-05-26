@@ -103,11 +103,11 @@ export async function sendResetCode({ nombre, email, code }) {
   })
 }
 
-export async function sendWelcomeEmail({ nombre, email, resetUrl }) {
+export async function sendWelcomeEmail({ nombre, email }) {
   await transporter.sendMail({
     from: `"SiCoDEAJ" <${process.env.EMAIL_FROM}>`,
     to: email,
-    subject: 'Bienvenido a SiCoDEAJ — Establece tu contraseña',
+    subject: 'Bienvenido a SiCoDEAJ — Tu cuenta ha sido creada',
     html: `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -122,29 +122,26 @@ export async function sendWelcomeEmail({ nombre, email, resetUrl }) {
             <p style="margin:0 0 8px 0;font-size:16px;font-weight:bold;color:#2A1239;font-family:Arial,sans-serif;">
               Hola, ${nombre}
             </p>
-            <p style="margin:0 0 24px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">
-              Tu cuenta en el <strong>Sistema de Control Documental DEAJ</strong> ha sido creada por un administrador.
-              Para activarla y establecer tu contrase&ntilde;a, haz clic en el siguiente bot&oacute;n:
+            <p style="margin:0 0 16px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">
+              Tu cuenta en el <strong>Sistema de Control Documental DEAJ (SiCoDEAJ)</strong> ha sido creada por un administrador.
             </p>
-            <table cellpadding="0" cellspacing="0" border="0">
+            <p style="margin:0 0 24px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">
+              Para establecer tu contrase&ntilde;a, ingresa al sistema con la siguiente direcci&oacute;n y selecciona
+              <strong>&ldquo;&iquest;Olvidaste tu contrase&ntilde;a?&rdquo;</strong>:
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8F5FB">
               <tr>
-                <td bgcolor="#582E73" style="background-color:#582E73;padding:12px 28px;">
-                  <a href="${resetUrl}"
-                    style="color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold;font-family:Arial,sans-serif;display:block;">
-                    Establecer contrase&ntilde;a
-                  </a>
+                <td align="center" style="padding:16px;border:1px solid #E2D9EE;">
+                  <p style="margin:0;font-size:15px;font-weight:bold;color:#582E73;font-family:Courier New,monospace;letter-spacing:1px;">
+                    sicodeaj.org
+                  </p>
                 </td>
               </tr>
             </table>
-            <p style="margin:20px 0 0 0;font-size:12px;color:#888888;font-family:Arial,sans-serif;line-height:1.5;">
-              Si el bot&oacute;n no funciona, copia y pega este enlace en tu navegador:<br>
-              <a href="${resetUrl}" style="color:#582E73;word-break:break-all;">${resetUrl}</a>
-            </p>
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF8E7" style="margin-top:16px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF8E7" style="margin-top:20px;">
               <tr>
                 <td style="padding:12px 16px;border-left:3px solid #F59E0B;">
                   <p style="margin:0;font-size:12px;color:#92400E;font-family:Arial,sans-serif;line-height:1.5;">
-                    Este enlace es v&aacute;lido por <strong>24 horas</strong>.
                     Si no esperabas esta cuenta, puedes ignorar este correo.
                   </p>
                 </td>
