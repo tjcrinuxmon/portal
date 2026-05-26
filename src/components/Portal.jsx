@@ -4,7 +4,7 @@ import { getSsoToken } from '../api.js'
 const APPS = [
   {
     key: 'tareas2',
-    title: 'Sistema de Tareas',
+    title: 'Módulo de Tareas',
     desc: 'Seguimiento de tareas y actividades de la Dirección Ejecutiva de Asuntos Jurídicos.',
     color: '#7040A0',
     bg: '#F5F0FB',
@@ -18,7 +18,7 @@ const APPS = [
   },
   {
     key: 'diligencias',
-    title: 'Sistema de Diligencias',
+    title: 'Módulo de Diligencias',
     desc: 'Calendarización y control de diligencias judiciales, términos legales y seguimiento de entrega.',
     color: '#0369A1',
     bg: '#F0F9FF',
@@ -33,7 +33,7 @@ const APPS = [
   },
   {
     key: 'oficios',
-    title: 'Generador de Oficios',
+    title: 'Módulo de Oficios',
     desc: 'Generación y control correlativo de oficios, opiniones, dictámenes y certificaciones.',
     color: '#047857',
     bg: '#F0FDF4',
