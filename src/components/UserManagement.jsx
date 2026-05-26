@@ -23,9 +23,9 @@ const ROLES_TAREAS = [
 ]
 
 const ROLES_DILIGENCIAS = [
-  { key: 'admin',       label: 'Administrador' },
   { key: 'usuario',     label: 'Usuario' },
   { key: 'notificador', label: 'Notificador' },
+  { key: 'coordinador', label: 'Coordinador' },
 ]
 
 const ROLES_OFICIOS = [
@@ -34,13 +34,14 @@ const ROLES_OFICIOS = [
 ]
 
 const AREAS_DILIGENCIAS = [
+  'Coordinación de Análisis de Información y Control Documental',
+  'Coordinación Administrativa',
   'Dirección de Instrucción Recursal',
   'Dirección de Servicios Legales',
   'Dirección de Asuntos Laborales',
   'Dirección de Normatividad y Consulta',
   'Dirección de Asuntos HASL',
   'Dirección de Contratos y Convenios',
-  'Coordinación Administrativa',
 ]
 
 const GROUPS = [
@@ -286,7 +287,13 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="ine-label">Rol en Diligencias</label>
-                  <select className="ine-input" value={f.rol_diligencias} onChange={e => set('rol_diligencias', e.target.value)}>
+                  <select className="ine-input" value={f.rol_diligencias} onChange={e => {
+                    const rol = e.target.value
+                    set('rol_diligencias', rol)
+                    if (rol === 'coordinador' || rol === 'notificador') {
+                      set('area_diligencias', 'Coordinación de Análisis de Información y Control Documental')
+                    }
+                  }}>
                     {ROLES_DILIGENCIAS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
                   </select>
                 </div>

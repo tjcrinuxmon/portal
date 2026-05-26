@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
@@ -52,6 +53,8 @@ db.exec(`
 /* Seed inicial */
 const exists = db.prepare('SELECT COUNT(*) as n FROM usuarios').get()
 if (exists.n === 0) {
+  const rnd = () => crypto.randomBytes(12).toString('base64url')
+  const adminPwd = process.env.ADMIN_SEED_PASSWORD || rnd()
   const hash = (p) => bcrypt.hashSync(p, 10)
   const ins = db.prepare(`
     INSERT INTO usuarios
@@ -61,16 +64,17 @@ if (exists.n === 0) {
        acceso_diligencias, rol_diligencias, area_diligencias)
     VALUES (?,?,?,?, ?,?,?, ?,?, ?,?,?)
   `)
-  ins.run('Administrador','admin@ine.mx', hash('Admin1234!'), 'admin',
+  ins.run('Administrador','admin@ine.mx', hash(adminPwd), 'admin',
           1,'admin','',  1,'admin',  1,'admin','')
-  ins.run('Anahí Silva Tosca','anahi.silva@ine.mx', hash('Ejecutiva1234!'), 'usuario',
+  ins.run('Anahí Silva Tosca','anahi.silva@ine.mx', hash(rnd()), 'usuario',
           1,'ejecutiva','',  1,'admin',  1,'admin','')
-  ins.run('Usuario Tareas','tareas@ine.mx', hash('Usuario1234!'), 'usuario',
+  ins.run('Usuario Tareas','tareas@ine.mx', hash(rnd()), 'usuario',
           1,'director','asuntos_laborales',  0,'',  0,'','')
-  ins.run('Usuario Oficios','oficios@ine.mx', hash('Usuario1234!'), 'usuario',
+  ins.run('Usuario Oficios','oficios@ine.mx', hash(rnd()), 'usuario',
           0,'','',  1,'usuario',  0,'','')
-  ins.run('Usuario Diligencias','diligencias@ine.mx', hash('Usuario1234!'), 'usuario',
+  ins.run('Usuario Diligencias','diligencias@ine.mx', hash(rnd()), 'usuario',
           0,'','',  0,'',  1,'usuario','DAL')
+  console.log(`👤 Admin portal creado: admin@ine.mx / ${adminPwd}  ← guarda esta contraseña`)
 }
 
 export default db

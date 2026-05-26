@@ -1,6 +1,8 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
@@ -70,13 +72,61 @@ if (tareasDb) {
   console.log(`✅ ${all.length} usuarios de tareas sincronizados al arranque`)
 }
 
+/* ── Diligencias DB sync ────────────────────────────────────────────────────
+   Mirror portal user changes into diligencias.sqlite immediately on save.
+ ─────────────────────────────────────────────────────────────────────────── */
+const diligenciasDbPath = join(__dirname, '..', 'diligencias', 'diligencias.sqlite')
+let diligenciasDb = null
+try {
+  if (existsSync(diligenciasDbPath)) {
+    diligenciasDb = new Database(diligenciasDbPath)
+    console.log('✅ diligencias.db conectado para sincronización')
+  }
+} catch (e) {
+  console.warn('⚠️  No se pudo abrir diligencias.sqlite:', e.message)
+}
+
+function syncToDiligencias(u) {
+  if (!diligenciasDb) return
+  try {
+    const activo = u.acceso_diligencias ? 1 : 0
+    const rol    = u.rol_diligencias || 'usuario'
+    const area   = u.area_diligencias || ''
+    const exists = diligenciasDb.prepare('SELECT id FROM usuarios WHERE email = ?').get(u.email)
+    if (exists) {
+      diligenciasDb.prepare(
+        'UPDATE usuarios SET nombre=?, rol=?, area=?, activo=? WHERE email=?'
+      ).run(u.nombre, rol, area, activo, u.email)
+    } else if (u.acceso_diligencias) {
+      const hash = u.password_hash || 'sso_placeholder'
+      diligenciasDb.prepare(
+        'INSERT INTO usuarios (nombre, email, password, rol, area, activo) VALUES (?,?,?,?,?,?)'
+      ).run(u.nombre, u.email, hash, rol, area, 1)
+    }
+  } catch (e) {
+    console.error('Error sincronizando a diligencias:', e.message)
+  }
+}
+
+// On startup: sync every portal user that has diligencias access
+if (diligenciasDb) {
+  const all = db.prepare('SELECT * FROM usuarios WHERE acceso_diligencias = 1').all()
+  all.forEach(u => syncToDiligencias(u))
+  console.log(`✅ ${all.length} usuarios de diligencias sincronizados al arranque`)
+}
+
 const app  = express()
 const PORT = process.env.PORT || 3004
 
-const PORTAL_SECRET  = process.env.PORTAL_SECRET  || 'ine_portal_jwt_secret_2026'
-const TAREAS_SECRET  = process.env.TAREAS_SECRET   || 'ine_portal_sso_tareas_2026'
-const OFICIOS_SECRET = process.env.OFICIOS_SECRET  || 'ine_portal_sso_oficios_2026'
-const DILIG_SECRET   = process.env.DILIG_SECRET    || 'ine_portal_sso_dilig_2026'
+const PORTAL_SECRET  = process.env.PORTAL_SECRET
+const TAREAS_SECRET  = process.env.TAREAS_SECRET
+const OFICIOS_SECRET = process.env.OFICIOS_SECRET
+const DILIG_SECRET   = process.env.DILIG_SECRET
+
+if (!PORTAL_SECRET || !TAREAS_SECRET || !OFICIOS_SECRET || !DILIG_SECRET) {
+  console.error('FATAL: Faltan variables de entorno de seguridad (PORTAL_SECRET, TAREAS_SECRET, OFICIOS_SECRET, DILIG_SECRET)')
+  process.exit(1)
+}
 
 /* App URLs — todos pasan por el gateway */
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
@@ -87,7 +137,12 @@ const APP_URLS = {
   diligencias: process.env.URL_DILIGENCIAS || `${BASE_URL}/diligencias`,
 }
 
-app.use(cors())
+app.use(helmet({ contentSecurityPolicy: false }))
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+}))
 app.use(express.json())
 
 /* ── Auth middleware ────────────────────────────────────────────────────── */
@@ -106,8 +161,16 @@ function adminOnly(req, res, next) {
   next()
 }
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos. Espera 15 minutos.' },
+})
+
 /* ── POST /api/auth/login ───────────────────────────────────────────────── */
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', loginLimiter, (req, res) => {
   const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ error: 'Faltan campos' })
 
@@ -210,6 +273,7 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
            resetToken, expires)
     const created = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(r.lastInsertRowid)
     syncToTareas(created)
+    syncToDiligencias(created)
     const resetUrl = `${BASE_URL}?token=${resetToken}`
     try {
       await sendWelcomeEmail({ nombre, email: email.toLowerCase(), resetUrl })
@@ -249,6 +313,7 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
          req.params.id)
   const updated = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.params.id)
   syncToTareas(updated)
+  syncToDiligencias(updated)
   res.json({ ok: true })
 })
 
