@@ -17,7 +17,7 @@ function header() {
       <tr>
         <td style="padding:16px 28px;">
           <span style="color:#ffffff;font-size:18px;font-weight:bold;font-family:Arial,sans-serif;letter-spacing:-0.5px;">INE &middot; DEAJ</span>
-          <span style="color:rgba(255,255,255,0.6);font-size:12px;font-family:Arial,sans-serif;padding-left:10px;">Portal de Sistemas</span>
+          <span style="color:rgba(255,255,255,0.6);font-size:12px;font-family:Arial,sans-serif;padding-left:10px;">Sistema de Control Documental</span>
         </td>
       </tr>
     </table>`
@@ -47,9 +47,9 @@ export async function sendResetCode({ nombre, email, code }) {
   ).join('')
 
   await transporter.sendMail({
-    from: `"Portal DEAJ" <${process.env.EMAIL_FROM}>`,
+    from: `"SiCoDEAJ" <${process.env.EMAIL_FROM}>`,
     to: email,
-    subject: 'Portal DEAJ — Código para restablecer contraseña',
+    subject: 'SiCoDEAJ — Código para restablecer contraseña',
     html: `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -105,9 +105,9 @@ export async function sendResetCode({ nombre, email, code }) {
 
 export async function sendWelcomeEmail({ nombre, email, resetUrl }) {
   await transporter.sendMail({
-    from: `"Portal DEAJ" <${process.env.EMAIL_FROM}>`,
+    from: `"SiCoDEAJ" <${process.env.EMAIL_FROM}>`,
     to: email,
-    subject: 'Bienvenido al Portal DEAJ — Establece tu contraseña',
+    subject: 'Bienvenido a SiCoDEAJ — Establece tu contraseña',
     html: `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -123,7 +123,7 @@ export async function sendWelcomeEmail({ nombre, email, resetUrl }) {
               Hola, ${nombre}
             </p>
             <p style="margin:0 0 24px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">
-              Tu cuenta en el <strong>Portal de Sistemas DEAJ</strong> ha sido creada por un administrador.
+              Tu cuenta en el <strong>Sistema de Control Documental DEAJ</strong> ha sido creada por un administrador.
               Para activarla y establecer tu contrase&ntilde;a, haz clic en el siguiente bot&oacute;n:
             </p>
             <table cellpadding="0" cellspacing="0" border="0">
