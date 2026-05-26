@@ -126,18 +126,9 @@ export async function sendWelcomeEmail({ nombre, email }) {
               Tu cuenta en el <strong>Sistema de Control Documental DEAJ (SiCoDEAJ)</strong> ha sido creada por un administrador.
             </p>
             <p style="margin:0 0 24px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">
-              Para establecer tu contrase&ntilde;a, ingresa al sistema y selecciona
-              <strong>&ldquo;&iquest;Olvidaste tu contrase&ntilde;a?&rdquo;</strong>:
+              Para establecer tu contrase&ntilde;a, ingresa al sistema institucional y selecciona
+              <strong>&ldquo;&iquest;Olvidaste tu contrase&ntilde;a?&rdquo;</strong> con este correo electr&oacute;nico.
             </p>
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8F5FB">
-              <tr>
-                <td align="center" style="padding:16px;border:1px solid #E2D9EE;">
-                  <p style="margin:0;font-size:15px;font-weight:bold;color:#582E73;font-family:Courier New,monospace;letter-spacing:1px;">
-                    sicodeaj.org
-                  </p>
-                </td>
-              </tr>
-            </table>
             <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF8E7" style="margin-top:20px;">
               <tr>
                 <td style="padding:12px 16px;border-left:3px solid #F59E0B;">
