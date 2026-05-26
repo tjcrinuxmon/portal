@@ -18,8 +18,8 @@ const APPS = [
   },
   {
     key: 'diligencias',
-    title: 'Módulo de Diligencias',
-    desc: 'Calendarización y control de diligencias judiciales, términos legales y seguimiento de entrega.',
+    title: 'Módulo de Notificaciones',
+    desc: 'Calendarización y control de notificaciones judiciales, términos legales y seguimiento de entrega.',
     color: '#0369A1',
     bg: '#F0F9FF',
     border: '#BAE6FD',

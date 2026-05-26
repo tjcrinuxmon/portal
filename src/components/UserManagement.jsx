@@ -282,11 +282,11 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
 
           {/* ── Acceso: Diligencias ──────────────────────────────────── */}
           <section className="rounded-xl p-4 space-y-3" style={{ background: '#F0F9FF', border: '1.5px solid #BAE6FD' }}>
-            <Toggle checked={f.acceso_diligencias} onChange={v => set('acceso_diligencias', v)} label="Acceso al Sistema de Diligencias" />
+            <Toggle checked={f.acceso_diligencias} onChange={v => set('acceso_diligencias', v)} label="Acceso al Sistema de Notificaciones" />
             {f.acceso_diligencias && (
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="ine-label">Rol en Diligencias</label>
+                  <label className="ine-label">Rol en Notificaciones</label>
                   <select className="ine-input" value={f.rol_diligencias} onChange={e => {
                     const rol = e.target.value
                     set('rol_diligencias', rol)
@@ -629,7 +629,7 @@ export default function UserManagement({ onBack, me }) {
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Nombre</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Correo</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden md:table-cell">Dirección de Área</th>
-                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Diligencias</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Notificaciones</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">SiCoDEAJ</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Estado</th>
                           <th className="px-4 py-2.5 text-right text-xs font-bold text-ine-muted uppercase tracking-wide">Acciones</th>
