@@ -310,10 +310,10 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
 
           {/* ── Acceso: Oficios ──────────────────────────────────────── */}
           <section className="rounded-xl p-4 space-y-3" style={{ background: '#F0FDF4', border: '1.5px solid #BBF7D0' }}>
-            <Toggle checked={f.acceso_oficios} onChange={v => set('acceso_oficios', v)} label="Acceso al Generador de Oficios" />
+            <Toggle checked={f.acceso_oficios} onChange={v => set('acceso_oficios', v)} label="Acceso a SiCoDEAJ" />
             {f.acceso_oficios && (
               <div className="pt-1">
-                <label className="ine-label">Rol en Oficios</label>
+                <label className="ine-label">Rol en SiCoDEAJ</label>
                 <select className="ine-input w-1/2" value={f.rol_oficios} onChange={e => set('rol_oficios', e.target.value)}>
                   {ROLES_OFICIOS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
                 </select>
@@ -630,7 +630,7 @@ export default function UserManagement({ onBack, me }) {
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Correo</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden md:table-cell">Dirección de Área</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Diligencias</th>
-                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Oficios</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">SiCoDEAJ</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Estado</th>
                           <th className="px-4 py-2.5 text-right text-xs font-bold text-ine-muted uppercase tracking-wide">Acciones</th>
                         </tr>
