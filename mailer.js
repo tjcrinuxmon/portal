@@ -107,7 +107,7 @@ export async function sendWelcomeEmail({ nombre, email }) {
   await transporter.sendMail({
     from: `"SiCoDEAJ" <${process.env.EMAIL_FROM}>`,
     to: email,
-    subject: 'Bienvenido a SiCoDEAJ — Tu cuenta ha sido creada',
+    subject: 'Tu cuenta en SiCoDEAJ ha sido creada',
     html: `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
