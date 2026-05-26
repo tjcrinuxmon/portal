@@ -270,7 +270,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
                     )}
                     {dirSubs.length === 0 && (
                       <p className="text-xs text-ine-muted mt-1">
-                        No hay subdirecciones para esta dirección. Cierra este formulario y ve al catálogo <strong>Catálogo de Subdirecciones</strong> al final de la página para agregarlas.
+                        No hay subdirecciones para esta dirección. Cierra este formulario y ve al <strong>Catálogo de Subdirecciones</strong> al final de la página para agregarlas.
                       </p>
                     )}
                   </div>

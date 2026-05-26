@@ -82,6 +82,7 @@ const DILIG_SECRET   = process.env.DILIG_SECRET    || 'ine_portal_sso_dilig_2026
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const APP_URLS = {
   tareas:      process.env.URL_TAREAS      || `${BASE_URL}/tareas/`,
+  tareas2:     process.env.URL_TAREAS2     || `${BASE_URL}/tareas2/`,
   oficios:     process.env.URL_OFICIOS     || `${BASE_URL}/oficios`,
   diligencias: process.env.URL_DILIGENCIAS || `${BASE_URL}/diligencias`,
 }
@@ -147,6 +148,11 @@ app.get('/api/sso/:app', auth, (req, res) => {
 
   const appConfig = {
     tareas: {
+      secret: TAREAS_SECRET,
+      check: () => u.acceso_tareas,
+      payload: () => ({ email: u.email, name: u.nombre, role: u.rol_tareas, direccion: u.direccion_tareas, puesto: u.puesto || '' }),
+    },
+    tareas2: {
       secret: TAREAS_SECRET,
       check: () => u.acceso_tareas,
       payload: () => ({ email: u.email, name: u.nombre, role: u.rol_tareas, direccion: u.direccion_tareas, puesto: u.puesto || '' }),

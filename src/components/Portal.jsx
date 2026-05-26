@@ -3,17 +3,16 @@ import { getSsoToken } from '../api.js'
 
 const APPS = [
   {
-    key: 'tareas',
+    key: 'tareas2',
     title: 'Sistema de Tareas',
     desc: 'Seguimiento de tareas y actividades de la Dirección Ejecutiva de Asuntos Jurídicos.',
-    color: '#582E73',
-    bg: '#F8F5FB',
-    border: '#E2D9EE',
+    color: '#7040A0',
+    bg: '#F5F0FB',
+    border: '#D9C8EE',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-        <rect x="9" y="3" width="6" height="4" rx="1" />
-        <path d="M9 12l2 2 4-4" />
+        <path d="M4 6h16M4 10h16M4 14h10M4 18h6" />
+        <rect x="14" y="12" width="7" height="7" rx="1" />
       </svg>
     ),
   },
@@ -50,6 +49,7 @@ const APPS = [
 
 const ACCESS_KEY = {
   tareas:      'acceso_tareas',
+  tareas2:     'acceso_tareas',
   diligencias: 'acceso_diligencias',
   oficios:     'acceso_oficios',
 }
