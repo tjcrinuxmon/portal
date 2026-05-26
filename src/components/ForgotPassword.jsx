@@ -158,7 +158,7 @@ export default function ForgotPassword({ onBack }) {
             <BrandLogo size={48} />
             <div className="text-left">
               <p className="text-2xl font-black leading-none tracking-tight" style={{ color:'#575453' }}>DEAJ</p>
-              <p className="text-xs font-semibold mt-1.5 leading-snug" style={{ color:'#D5007F' }}>Portal de Sistemas</p>
+              <p className="text-xs font-semibold mt-1.5 leading-snug" style={{ color:'#D5007F' }}>Sistema de Control Documental</p>
             </div>
           </div>
 

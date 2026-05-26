@@ -81,7 +81,7 @@ export default function Portal({ user, onLogout, onManageUsers }) {
             style={{ background:'#582E73' }}>INE</div>
           <div>
             <p className="text-sm font-black text-ine-purple leading-none">INE · DEAJ</p>
-            <p className="text-xs text-ine-muted leading-none mt-0.5">Portal de Sistemas</p>
+            <p className="text-xs text-ine-muted leading-none mt-0.5">Sistema de Control Documental</p>
           </div>
         </div>
 
