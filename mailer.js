@@ -1,15 +1,13 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT) || 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: { rejectUnauthorized: false },
-})
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+const EMAIL_FROM = process.env.EMAIL_FROM || 'SiCoDEAJ <noreply@sicodeaj.org>'
+
+async function sendMail({ to, subject, html }) {
+  const { error } = await resend.emails.send({ from: EMAIL_FROM, to, subject, html })
+  if (error) throw new Error(error.message)
+}
 
 function header() {
   return `
@@ -46,8 +44,7 @@ export async function sendResetCode({ nombre, email, code }) {
     <td width="6" style="width:6px;"></td>`
   ).join('')
 
-  await transporter.sendMail({
-    from: `"SiCoDEAJ" <${process.env.EMAIL_FROM}>`,
+  await sendMail({
     to: email,
     subject: 'SiCoDEAJ — Código para restablecer contraseña',
     html: `<!DOCTYPE html>
@@ -104,8 +101,7 @@ export async function sendResetCode({ nombre, email, code }) {
 }
 
 export async function sendWelcomeEmail({ nombre, email, resetUrl }) {
-  await transporter.sendMail({
-    from: `"SiCoDEAJ" <${process.env.EMAIL_FROM}>`,
+  await sendMail({
     to: email,
     subject: 'Bienvenido a SiCoDEAJ — Establece tu contraseña',
     html: `<!DOCTYPE html>
