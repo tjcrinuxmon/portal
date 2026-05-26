@@ -178,6 +178,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
   if (!u || !bcrypt.compareSync(password, u.password_hash))
     return res.status(401).json({ error: 'Credenciales incorrectas' })
 
+  db.prepare('UPDATE usuarios SET primer_acceso = 0 WHERE id = ?').run(u.id)
   const token = jwt.sign(
     { id: u.id, email: u.email, nombre: u.nombre, rol: u.rol, puesto: u.puesto || '',
       acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas,
@@ -191,6 +192,14 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
     acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
     acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
   }})
+})
+
+/* ── GET /api/auth/primer-acceso?email=... ──────────────────────────────── */
+app.get('/api/auth/primer-acceso', (req, res) => {
+  const { email } = req.query
+  if (!email) return res.json({ primerAcceso: false })
+  const u = db.prepare('SELECT primer_acceso FROM usuarios WHERE email = ? AND activo = 1').get(email.trim().toLowerCase())
+  res.json({ primerAcceso: u ? !!u.primer_acceso : false })
 })
 
 /* ── GET /api/auth/me ───────────────────────────────────────────────────── */
@@ -264,13 +273,13 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
         acceso_tareas,rol_tareas,direccion_tareas,
         acceso_oficios,rol_oficios,
         acceso_diligencias,rol_diligencias,area_diligencias,
-        reset_token,reset_token_expires)
-      VALUES (?,?,?,?,?, ?,?,?, ?,?, ?,?,?, ?,?)
+        reset_token,reset_token_expires,primer_acceso)
+      VALUES (?,?,?,?,?, ?,?,?, ?,?, ?,?,?, ?,?,?)
     `).run(nombre, email.toLowerCase(), hash, rol, puesto,
            acceso_tareas ? 1 : 0, rol_tareas, direccion_tareas,
            acceso_oficios ? 1 : 0, rol_oficios,
            acceso_diligencias ? 1 : 0, rol_diligencias, area_diligencias,
-           resetToken, expires)
+           resetToken, expires, 1)
     const created = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(r.lastInsertRowid)
     syncToTareas(created)
     syncToDiligencias(created)
@@ -402,7 +411,7 @@ app.post('/api/auth/reset-password', (req, res) => {
   if (!u) { log(`RESET PASSWORD FAIL → token no encontrado en DB`); return res.status(400).json({ error: 'Enlace inválido o expirado' }) }
   if (new Date(u.reset_token_expires) < new Date()) { log(`RESET PASSWORD FAIL → token expirado`); return res.status(400).json({ error: 'El enlace ha expirado' }) }
   const hash = bcrypt.hashSync(password, 10)
-  db.prepare('UPDATE usuarios SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?').run(hash, u.id)
+  db.prepare('UPDATE usuarios SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL, primer_acceso = 0 WHERE id = ?').run(hash, u.id)
   log(`RESET PASSWORD OK → usuario id=${u.id} contraseña actualizada`)
   res.json({ ok: true })
 })

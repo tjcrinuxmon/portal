@@ -24,6 +24,7 @@ export const validateResetToken = (token)            => api.get(`/auth/reset-pas
 export const resetPassword      = (token, password)  => api.post('/auth/reset-password', { token, password }).then(r => r.data)
 export const forgotPassword        = (email)               => api.post('/auth/forgot-password', { email }).then(r => r.data)
 export const verifyResetCode       = (email, code)         => api.post('/auth/verify-code', { email, code }).then(r => r.data)
+export const checkPrimerAcceso     = (email)               => api.get(`/auth/primer-acceso?email=${encodeURIComponent(email)}`).then(r => r.data)
 export const getSubdirecciones     = ()                    => api.get('/subdirecciones').then(r => r.data)
 export const createSubdireccion    = (direccion_key, nombre) => api.post('/subdirecciones', { direccion_key, nombre }).then(r => r.data)
 export const updateSubdireccion    = (id, nombre)           => api.put(`/subdirecciones/${id}`, { nombre }).then(r => r.data)

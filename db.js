@@ -40,6 +40,7 @@ try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_token TEXT") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_token_expires TEXT") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code TEXT") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code_expires TEXT") } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN primer_acceso INTEGER DEFAULT 0") } catch (_) {}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS subdirecciones (

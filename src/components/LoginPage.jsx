@@ -1,13 +1,24 @@
 import React, { useState } from 'react'
-import { login } from '../api.js'
+import { login, checkPrimerAcceso } from '../api.js'
 import BrandLogo from './BrandLogo.jsx'
 
 export default function LoginPage({ onLogin, onForgot }) {
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [error,    setError]    = useState(null)
-  const [loading,  setLoading]  = useState(false)
-  const [showPass, setShowPass] = useState(false)
+  const [email,       setEmail]       = useState('')
+  const [password,    setPassword]    = useState('')
+  const [error,       setError]       = useState(null)
+  const [loading,     setLoading]     = useState(false)
+  const [showPass,    setShowPass]    = useState(false)
+  const [primerAcceso, setPrimerAcceso] = useState(false)
+
+  const handleEmailBlur = async () => {
+    if (!email) { setPrimerAcceso(false); return }
+    try {
+      const { primerAcceso: pa } = await checkPrimerAcceso(email.trim())
+      setPrimerAcceso(pa)
+    } catch (_) {
+      setPrimerAcceso(false)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -73,6 +84,7 @@ export default function LoginPage({ onLogin, onForgot }) {
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  onBlur={handleEmailBlur}
                   placeholder="correo@ine.mx" autoComplete="email"
                   className="ine-input" style={{ paddingLeft:'36px' }} />
               </div>
@@ -101,9 +113,16 @@ export default function LoginPage({ onLogin, onForgot }) {
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center">
+              {primerAcceso && (
+                <button type="button" onClick={onForgot}
+                  className="text-xs font-semibold hover:underline transition-colors" style={{ color:'#D5007F' }}>
+                  Primera vez aquí
+                </button>
+              )}
               <button type="button" onClick={onForgot}
-                className="text-xs font-semibold hover:underline transition-colors" style={{ color:'#582E73' }}>
+                className={`text-xs font-semibold hover:underline transition-colors${primerAcceso ? '' : ' ml-auto'}`}
+                style={{ color:'#582E73' }}>
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
