@@ -104,7 +104,7 @@ export default function ResetPassword({ token, onDone }) {
                   <div className="relative">
                     <input type={showPass ? 'text' : 'password'} value={password}
                       onChange={e => setPassword(e.target.value)}
-                      placeholder="Mínimo 8 caracteres"
+                      placeholder="Escribe tu contraseña"
                       className="ine-input" style={{ paddingRight:'36px' }} />
                     <button type="button" onClick={() => setShowPass(s => !s)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-ine-dim hover:text-ine-purple transition-colors" tabIndex={-1}>
@@ -116,6 +116,22 @@ export default function ResetPassword({ token, onDone }) {
                       </svg>
                     </button>
                   </div>
+                  {/* Requisitos en tiempo real */}
+                  <div className="mt-2 space-y-1">
+                    {[
+                      { ok: password.length >= 8, label: 'Mínimo 8 caracteres' },
+                    ].map(({ ok, label }) => (
+                      <div key={label} className="flex items-center gap-1.5 text-xs">
+                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke={password.length === 0 ? '#9CA3AF' : ok ? '#059669' : '#DC2626'} viewBox="0 0 24 24">
+                          {ok && password.length > 0
+                            ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                          }
+                        </svg>
+                        <span style={{ color: password.length === 0 ? '#9CA3AF' : ok ? '#059669' : '#DC2626' }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <label className="ine-label">Confirmar contraseña <span style={{ color:'#B91C1C' }}>*</span></label>
@@ -123,6 +139,20 @@ export default function ResetPassword({ token, onDone }) {
                     onChange={e => setConfirm(e.target.value)}
                     placeholder="Repite la contraseña"
                     className="ine-input" />
+                  {confirm.length > 0 && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none"
+                        stroke={password === confirm ? '#059669' : '#DC2626'} viewBox="0 0 24 24">
+                        {password === confirm
+                          ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        }
+                      </svg>
+                      <span style={{ color: password === confirm ? '#059669' : '#DC2626' }}>
+                        {password === confirm ? 'Las contraseñas coinciden' : 'Las contraseñas no coinciden'}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <button type="submit" disabled={status === 'saving'} className="btn-ine w-full justify-center mt-2" style={{ padding:'12px 24px' }}>
                   {status === 'saving'
