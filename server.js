@@ -166,6 +166,7 @@ const loginLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => `${req.ip}::${(req.body?.email || '').trim().toLowerCase()}`,
   message: { error: 'Demasiados intentos. Espera 15 minutos.' },
 })
 
