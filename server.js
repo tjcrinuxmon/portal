@@ -161,6 +161,15 @@ function adminOnly(req, res, next) {
   next()
 }
 
+function validatePassword(p) {
+  if (!p || p.length < 10)          return 'La contraseña debe tener al menos 10 caracteres'
+  if (!/[A-Z]/.test(p))             return 'La contraseña debe incluir al menos una letra mayúscula'
+  if (!/[a-z]/.test(p))             return 'La contraseña debe incluir al menos una letra minúscula'
+  if (!/[0-9]/.test(p))             return 'La contraseña debe incluir al menos un número'
+  if (!/[!@#$%&*\-_]/.test(p))      return 'La contraseña debe incluir al menos un carácter especial (!@#$%&*-_)'
+  return null
+}
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -407,7 +416,8 @@ app.post('/api/auth/reset-password', (req, res) => {
   const { token, password } = req.body
   log(`RESET PASSWORD → token=${token ? token.slice(0,8) + '...' : 'VACÍO'} pass_len=${password?.length}`)
   if (!token || !password) return res.status(400).json({ error: 'Faltan datos' })
-  if (password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' })
+  const passError = validatePassword(password)
+  if (passError) return res.status(400).json({ error: passError })
   const u = db.prepare('SELECT id, reset_token_expires FROM usuarios WHERE reset_token = ?').get(token)
   if (!u) { log(`RESET PASSWORD FAIL → token no encontrado en DB`); return res.status(400).json({ error: 'Enlace inválido o expirado' }) }
   if (new Date(u.reset_token_expires) < new Date()) { log(`RESET PASSWORD FAIL → token expirado`); return res.status(400).json({ error: 'El enlace ha expirado' }) }

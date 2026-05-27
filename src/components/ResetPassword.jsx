@@ -16,9 +16,18 @@ export default function ResetPassword({ token, onDone }) {
       .catch(() => setStatus('invalid'))
   }, [token])
 
+  const rules = [
+    { ok: password.length >= 10,        label: 'Mínimo 10 caracteres' },
+    { ok: /[A-Z]/.test(password),       label: 'Al menos una mayúscula (A-Z)' },
+    { ok: /[a-z]/.test(password),       label: 'Al menos una minúscula (a-z)' },
+    { ok: /[0-9]/.test(password),       label: 'Al menos un número (0-9)' },
+    { ok: /[!@#$%&*\-_]/.test(password), label: 'Al menos un carácter especial (!@#$%&*-_)' },
+  ]
+  const allRulesMet = rules.every(r => r.ok)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres'); return }
+    if (!allRulesMet) { setError('La contraseña no cumple todos los requisitos'); return }
     if (password !== confirm) { setError('Las contraseñas no coinciden'); return }
     setStatus('saving'); setError(null)
     try {
@@ -118,19 +127,20 @@ export default function ResetPassword({ token, onDone }) {
                   </div>
                   {/* Requisitos en tiempo real */}
                   <div className="mt-2 space-y-1">
-                    {[
-                      { ok: password.length >= 8, label: 'Mínimo 8 caracteres' },
-                    ].map(({ ok, label }) => (
-                      <div key={label} className="flex items-center gap-1.5 text-xs">
-                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke={password.length === 0 ? '#9CA3AF' : ok ? '#059669' : '#DC2626'} viewBox="0 0 24 24">
-                          {ok && password.length > 0
-                            ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                            : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                          }
-                        </svg>
-                        <span style={{ color: password.length === 0 ? '#9CA3AF' : ok ? '#059669' : '#DC2626' }}>{label}</span>
-                      </div>
-                    ))}
+                    {rules.map(({ ok, label }) => {
+                      const color = password.length === 0 ? '#9CA3AF' : ok ? '#059669' : '#DC2626'
+                      return (
+                        <div key={label} className="flex items-center gap-1.5 text-xs">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke={color} viewBox="0 0 24 24">
+                            {ok && password.length > 0
+                              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            }
+                          </svg>
+                          <span style={{ color }}>{label}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
                 <div>
