@@ -33,6 +33,18 @@ const ROLES_OFICIOS = [
   { key: 'usuario', label: 'Usuario' },
 ]
 
+const AREAS_OFICIOS = [
+  'Dirección Ejecutiva de Asuntos Jurídicos',
+  'Dirección de Asuntos HASL',
+  'Dirección de Asuntos Laborales',
+  'Dirección de Contratos y Convenios',
+  'Dirección de Instrucción Recursal',
+  'Dirección de Normatividad y Consulta',
+  'Dirección de Servicios Legales',
+  'Coordinación Administrativa',
+  'Coordinación de Análisis de Información y Control Documental',
+]
+
 const AREAS_DILIGENCIAS = [
   'Coordinación de Análisis de Información y Control Documental',
   'Coordinación Administrativa',
@@ -92,7 +104,7 @@ const EMPTY = {
   rol: 'usuario', puesto: '', activo: true,
   acceso_tareas: false, rol_tareas: 'director', direccion_tareas: 'instruccion_recusal',
   acceso_diligencias: false, rol_diligencias: 'usuario', area_diligencias: '',
-  acceso_oficios: false, rol_oficios: 'usuario',
+  acceso_oficios: false, rol_oficios: 'usuario', area_oficios: '',
 }
 
 function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
@@ -112,6 +124,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     area_diligencias:   user.area_diligencias || '',
     acceso_oficios:     !!user.acceso_oficios,
     rol_oficios:        user.rol_oficios      || 'usuario',
+    area_oficios:       user.area_oficios     || '',
   } : { ...EMPTY })
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState(null)
@@ -312,11 +325,22 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
           <section className="rounded-xl p-4 space-y-3" style={{ background: '#F0FDF4', border: '1.5px solid #BBF7D0' }}>
             <Toggle checked={f.acceso_oficios} onChange={v => set('acceso_oficios', v)} label="Acceso a SiCoDEAJ" />
             {f.acceso_oficios && (
-              <div className="pt-1">
-                <label className="ine-label">Rol en SiCoDEAJ</label>
-                <select className="ine-input w-1/2" value={f.rol_oficios} onChange={e => set('rol_oficios', e.target.value)}>
-                  {ROLES_OFICIOS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
-                </select>
+              <div className="pt-1 space-y-3">
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="ine-label">Rol en SiCoDEAJ</label>
+                    <select className="ine-input" value={f.rol_oficios} onChange={e => set('rol_oficios', e.target.value)}>
+                      {ROLES_OFICIOS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="ine-label">Área</label>
+                    <select className="ine-input" value={f.area_oficios} onChange={e => set('area_oficios', e.target.value)}>
+                      <option value="">— Seleccionar área —</option>
+                      {AREAS_OFICIOS.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
+                </div>
               </div>
             )}
           </section>

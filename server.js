@@ -115,6 +115,48 @@ if (diligenciasDb) {
   console.log(`✅ ${all.length} usuarios de diligencias sincronizados al arranque`)
 }
 
+/* ── Oficios DB sync ────────────────────────────────────────────────────────
+   Mirror portal user changes into oficio_db.sqlite immediately on save.
+ ─────────────────────────────────────────────────────────────────────────── */
+const oficiosDbPath = join(__dirname, '..', 'oficio-generator', 'oficio_db.sqlite')
+let oficiosDb = null
+try {
+  if (existsSync(oficiosDbPath)) {
+    oficiosDb = new Database(oficiosDbPath)
+    console.log('✅ oficio_db.sqlite conectado para sincronización')
+  }
+} catch (e) {
+  console.warn('⚠️  No se pudo abrir oficio_db.sqlite:', e.message)
+}
+
+function syncToOficios(u) {
+  if (!oficiosDb) return
+  try {
+    const activo = u.acceso_oficios ? 1 : 0
+    const rol    = u.rol_oficios    || 'usuario'
+    const area   = u.area_oficios   || ''
+    const exists = oficiosDb.prepare('SELECT id FROM usuarios WHERE email = ?').get(u.email)
+    if (exists) {
+      oficiosDb.prepare(
+        'UPDATE usuarios SET nombre=?, rol=?, area=?, activo=? WHERE email=?'
+      ).run(u.nombre, rol, area, activo, u.email)
+    } else if (u.acceso_oficios) {
+      oficiosDb.prepare(
+        'INSERT INTO usuarios (nombre, email, password_hash, rol, area, activo) VALUES (?,?,?,?,?,?)'
+      ).run(u.nombre, u.email, u.password_hash || 'sso_placeholder', rol, area, 1)
+    }
+  } catch (e) {
+    console.error('Error sincronizando a oficios:', e.message)
+  }
+}
+
+// On startup: sync every portal user that has oficios access
+if (oficiosDb) {
+  const all = db.prepare('SELECT * FROM usuarios WHERE acceso_oficios = 1').all()
+  all.forEach(u => syncToOficios(u))
+  console.log(`✅ ${all.length} usuarios de oficios sincronizados al arranque`)
+}
+
 const app  = express()
 const PORT = process.env.PORT || 3004
 
@@ -242,7 +284,7 @@ app.get('/api/sso/:app', auth, (req, res) => {
     oficios: {
       secret: OFICIOS_SECRET,
       check: () => u.acceso_oficios,
-      payload: () => ({ email: u.email, nombre: u.nombre, rol: u.rol_oficios }),
+      payload: () => ({ email: u.email, nombre: u.nombre, rol: u.rol_oficios, area: u.area_oficios || '' }),
     },
     diligencias: {
       secret: DILIG_SECRET,
@@ -262,7 +304,7 @@ app.get('/api/sso/:app', auth, (req, res) => {
 /* ── Usuarios (admin) ───────────────────────────────────────────────────── */
 app.get('/api/usuarios', auth, adminOnly, (_req, res) => {
   const rows = db.prepare(
-    'SELECT id,nombre,email,rol,puesto,acceso_tareas,rol_tareas,direccion_tareas,acceso_oficios,rol_oficios,acceso_diligencias,rol_diligencias,area_diligencias,activo,created_at FROM usuarios ORDER BY nombre'
+    'SELECT id,nombre,email,rol,puesto,acceso_tareas,rol_tareas,direccion_tareas,acceso_oficios,rol_oficios,area_oficios,acceso_diligencias,rol_diligencias,area_diligencias,activo,created_at FROM usuarios ORDER BY nombre'
   ).all()
   res.json(rows.map(u => ({ ...u, acceso_tareas: !!u.acceso_tareas, acceso_oficios: !!u.acceso_oficios, acceso_diligencias: !!u.acceso_diligencias, activo: !!u.activo })))
 })
@@ -270,7 +312,7 @@ app.get('/api/usuarios', auth, adminOnly, (_req, res) => {
 app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
   const { nombre, email, rol = 'usuario', puesto = '',
     acceso_tareas = false, rol_tareas = '', direccion_tareas = '',
-    acceso_oficios = false, rol_oficios = 'usuario',
+    acceso_oficios = false, rol_oficios = 'usuario', area_oficios = '',
     acceso_diligencias = false, rol_diligencias = 'usuario', area_diligencias = '' } = req.body
   if (!nombre || !email) return res.status(400).json({ error: 'Faltan campos obligatorios' })
   try {
@@ -281,18 +323,19 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
     const r = db.prepare(`
       INSERT INTO usuarios (nombre,email,password_hash,rol,puesto,
         acceso_tareas,rol_tareas,direccion_tareas,
-        acceso_oficios,rol_oficios,
+        acceso_oficios,rol_oficios,area_oficios,
         acceso_diligencias,rol_diligencias,area_diligencias,
         reset_token,reset_token_expires,primer_acceso)
-      VALUES (?,?,?,?,?, ?,?,?, ?,?, ?,?,?, ?,?,?)
+      VALUES (?,?,?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?)
     `).run(nombre, email.toLowerCase(), hash, rol, puesto,
            acceso_tareas ? 1 : 0, rol_tareas, direccion_tareas,
-           acceso_oficios ? 1 : 0, rol_oficios,
+           acceso_oficios ? 1 : 0, rol_oficios, area_oficios,
            acceso_diligencias ? 1 : 0, rol_diligencias, area_diligencias,
            resetToken, expires, 1)
     const created = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(r.lastInsertRowid)
     syncToTareas(created)
     syncToDiligencias(created)
+    syncToOficios(created)
     const resetUrl = `${BASE_URL}?token=${resetToken}`
     try {
       await sendWelcomeEmail({ nombre, email: email.toLowerCase() })
@@ -310,7 +353,7 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
 app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   const { nombre, email, password, rol, puesto,
     acceso_tareas, rol_tareas, direccion_tareas,
-    acceso_oficios, rol_oficios,
+    acceso_oficios, rol_oficios, area_oficios,
     acceso_diligencias, rol_diligencias, area_diligencias, activo } = req.body
   const u = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.params.id)
   if (!u) return res.status(404).json({ error: 'Usuario no encontrado' })
@@ -318,14 +361,14 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   db.prepare(`
     UPDATE usuarios SET nombre=?,email=?,password_hash=?,rol=?,puesto=?,
       acceso_tareas=?,rol_tareas=?,direccion_tareas=?,
-      acceso_oficios=?,rol_oficios=?,
+      acceso_oficios=?,rol_oficios=?,area_oficios=?,
       acceso_diligencias=?,rol_diligencias=?,area_diligencias=?,activo=?
     WHERE id=?
   `).run(nombre ?? u.nombre, (email ?? u.email).toLowerCase(), hash, rol ?? u.rol, puesto ?? u.puesto ?? '',
          acceso_tareas != null ? (acceso_tareas ? 1 : 0) : u.acceso_tareas,
          rol_tareas ?? u.rol_tareas, direccion_tareas ?? u.direccion_tareas,
          acceso_oficios != null ? (acceso_oficios ? 1 : 0) : u.acceso_oficios,
-         rol_oficios ?? u.rol_oficios,
+         rol_oficios ?? u.rol_oficios, area_oficios ?? u.area_oficios ?? '',
          acceso_diligencias != null ? (acceso_diligencias ? 1 : 0) : u.acceso_diligencias,
          rol_diligencias ?? u.rol_diligencias, area_diligencias ?? u.area_diligencias,
          activo != null ? (activo ? 1 : 0) : u.activo,
@@ -333,6 +376,7 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   const updated = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.params.id)
   syncToTareas(updated)
   syncToDiligencias(updated)
+  syncToOficios(updated)
   res.json({ ok: true })
 })
 
