@@ -126,7 +126,7 @@ export default function ForgotPassword({ onBack }) {
   // Paso 3 — nueva contraseña
   const handleSetPassword = async (e) => {
     e.preventDefault()
-    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres'); return }
+    if (password.length < 10) { setError('La contraseña debe tener al menos 10 caracteres'); return }
     if (password !== confirm) { setError('Las contraseñas no coinciden'); return }
     setLoading(true); setError(null)
     try {
@@ -257,7 +257,7 @@ export default function ForgotPassword({ onBack }) {
                   <label className="ine-label">Nueva contraseña <span style={{ color:'#B91C1C' }}>*</span></label>
                   <div className="relative">
                     <input type={showPass ? 'text' : 'password'} value={password}
-                      onChange={e => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres"
+                      onChange={e => setPassword(e.target.value)} placeholder="Mínimo 10 caracteres"
                       className="ine-input" style={{ paddingRight:'36px' }} />
                     <button type="button" onClick={() => setShowPass(s => !s)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-ine-dim hover:text-ine-purple transition-colors" tabIndex={-1}>
