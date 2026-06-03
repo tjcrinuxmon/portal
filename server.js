@@ -150,11 +150,11 @@ function syncToOficios(u) {
   }
 }
 
-// On startup: sync every portal user that has oficios access
+// On startup: sync ALL portal users so existing oficio_db records get corrected
 if (oficiosDb) {
-  const all = db.prepare('SELECT * FROM usuarios WHERE acceso_oficios = 1').all()
+  const all = db.prepare('SELECT * FROM usuarios').all()
   all.forEach(u => syncToOficios(u))
-  console.log(`✅ ${all.length} usuarios de oficios sincronizados al arranque`)
+  console.log(`✅ ${all.length} usuarios sincronizados a oficio_db al arranque`)
 }
 
 const app  = express()
