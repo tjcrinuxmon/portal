@@ -665,6 +665,14 @@ export default function UserManagement({ onBack, me }) {
                       <tbody>
                         {items.map((u, i) => {
                           const dir = dirCfg(u.direccion_tareas)
+                          // Área derivada: tareas → diligencias → oficios → vacío
+                          const areaLabel = (u.acceso_tareas && needsDireccion(u.rol_tareas) && dir)
+                            ? dir.label
+                            : (u.acceso_diligencias && u.area_diligencias)
+                              ? u.area_diligencias
+                              : (u.acceso_oficios && u.area_oficios)
+                                ? u.area_oficios
+                                : null
                           return (
                             <tr key={u.id}
                               style={{ borderBottom: i < items.length - 1 ? '1px solid #EDE8F4' : undefined }}
@@ -698,14 +706,16 @@ export default function UserManagement({ onBack, me }) {
                                 <span className="text-sm text-ine-muted">{u.email}</span>
                               </td>
 
-                              {/* Dirección */}
+                              {/* Dirección / Área */}
                               <td className="px-4 py-3 hidden md:table-cell">
-                                {dir && needsDireccion(u.rol_tareas) ? (
-                                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
-                                    style={{ background: dir.color + '15', color: dir.color }}>
-                                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: dir.color }} />
-                                    {dir.label}
-                                  </span>
+                                {areaLabel ? (
+                                  dir && u.acceso_tareas && needsDireccion(u.rol_tareas)
+                                    ? <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
+                                        style={{ background: dir.color + '15', color: dir.color }}>
+                                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: dir.color }} />
+                                        {dir.label}
+                                      </span>
+                                    : <span className="text-xs text-ine-muted">{areaLabel}</span>
                                 ) : <span className="text-xs text-ine-dim">—</span>}
                               </td>
 
