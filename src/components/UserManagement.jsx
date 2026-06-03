@@ -146,8 +146,8 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     try {
       const data = { ...f }
       if (!data.password) delete data.password
-      if (!needsDireccion(f.rol_tareas)) data.direccion_tareas = ''
-      if (!needsPuesto(f.rol_tareas))    data.puesto = ''
+      if (!f.acceso_tareas || !needsDireccion(f.rol_tareas)) data.direccion_tareas = ''
+      if (!f.acceso_tareas || !needsPuesto(f.rol_tareas))    data.puesto = ''
       if (isEdit) await updateUsuario(user.id, data)
       else        await createUsuario(data)
       onSaved()
