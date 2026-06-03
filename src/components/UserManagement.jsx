@@ -43,6 +43,8 @@ const AREAS_OFICIOS = [
   'Dirección de Servicios Legales',
   'Coordinación Administrativa',
   'Coordinación de Análisis de Información y Control Documental',
+  'Líder de Enlace Interinstitucional',
+  'Secretaría Particular',
 ]
 
 const AREAS_DILIGENCIAS = [
@@ -54,6 +56,7 @@ const AREAS_DILIGENCIAS = [
   'Dirección de Normatividad y Consulta',
   'Dirección de Asuntos HASL',
   'Dirección de Contratos y Convenios',
+  'Líder de Enlace Interinstitucional',
 ]
 
 const GROUPS = [
