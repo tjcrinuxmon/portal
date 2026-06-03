@@ -69,6 +69,20 @@ const GROUPS = [
 ]
 
 const needsDireccion = (rol) => rol === 'director' || rol === 'subdirector'
+
+const AREA_COLORS = {
+  'Dirección de Instrucción Recursal':                           '#3B82F6',
+  'Dirección de Contratos y Convenios':                         '#10B981',
+  'Dirección de Asuntos HASL':                                  '#F59E0B',
+  'Dirección de Normatividad y Consulta':                       '#8B5CF6',
+  'Dirección de Asuntos Laborales':                             '#EF4444',
+  'Dirección de Servicios Legales':                             '#14B8A6',
+  'Coordinación Administrativa':                                '#D97706',
+  'Secretaría Particular':                                      '#EC4899',
+  'Coordinación de Análisis de Información y Control Documental': '#6366F1',
+  'Líder de Enlace Interinstitucional':                         '#F97316',
+  'Dirección Ejecutiva de Asuntos Jurídicos':                   '#582E73',
+}
 const needsPuesto    = (rol) => rol === 'subdirector'
 const dirCfg         = (key) => DIRECCIONES.find(d => d.key === key)
 
@@ -708,15 +722,18 @@ export default function UserManagement({ onBack, me }) {
 
                               {/* Dirección / Área */}
                               <td className="px-4 py-3 hidden md:table-cell">
-                                {areaLabel ? (
-                                  dir && u.acceso_tareas && needsDireccion(u.rol_tareas)
-                                    ? <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
-                                        style={{ background: dir.color + '15', color: dir.color }}>
-                                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: dir.color }} />
-                                        {dir.label}
-                                      </span>
-                                    : <span className="text-xs text-ine-muted">{areaLabel}</span>
-                                ) : <span className="text-xs text-ine-dim">—</span>}
+                                {areaLabel ? (() => {
+                                  const color = (dir && u.acceso_tareas && needsDireccion(u.rol_tareas))
+                                    ? dir.color
+                                    : (AREA_COLORS[areaLabel] || '#6B7280')
+                                  return (
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
+                                      style={{ background: color + '18', color }}>
+                                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                                      {areaLabel}
+                                    </span>
+                                  )
+                                })() : <span className="text-xs text-ine-dim">—</span>}
                               </td>
 
                               {/* Diligencias */}
