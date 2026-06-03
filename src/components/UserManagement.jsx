@@ -105,7 +105,7 @@ function AppBadge({ label, color }) {
 const EMPTY = {
   nombre: '', email: '', password: '',
   rol: 'usuario', puesto: '', activo: true,
-  acceso_tareas: false, rol_tareas: 'director', direccion_tareas: 'instruccion_recusal',
+  acceso_tareas: false, rol_tareas: 'director', direccion_tareas: '',
   acceso_diligencias: false, rol_diligencias: 'usuario', area_diligencias: '',
   acceso_oficios: false, rol_oficios: 'usuario', area_oficios: '',
 }
@@ -121,7 +121,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     activo:             user.activo           ?? true,
     acceso_tareas:      !!user.acceso_tareas,
     rol_tareas:         user.rol_tareas       || 'director',
-    direccion_tareas:   user.direccion_tareas || 'instruccion_recusal',
+    direccion_tareas:   user.direccion_tareas || '',
     acceso_diligencias: !!user.acceso_diligencias,
     rol_diligencias:    user.rol_diligencias  || 'usuario',
     area_diligencias:   user.area_diligencias || '',
