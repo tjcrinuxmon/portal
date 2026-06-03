@@ -172,11 +172,15 @@ if (!PORTAL_SECRET || !TAREAS_SECRET || !OFICIOS_SECRET || !DILIG_SECRET) {
 
 /* App URLs — todos pasan por el gateway */
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
+// URLs de los módulos: RELATIVAS por defecto. Así la redirección SSO se queda en el
+// mismo host/origen desde el que se entró (localhost, IP de red, o el dominio en prod),
+// en vez de forzar localhost. Todo pasa por el gateway en el mismo origen, así que basta
+// la ruta. Si algún módulo viviera en otro dominio, se puede sobreescribir con URL_*.
 const APP_URLS = {
-  tareas:      process.env.URL_TAREAS      || `${BASE_URL}/tareas/`,
-  tareas2:     process.env.URL_TAREAS2     || `${BASE_URL}/tareas2/`,
-  oficios:     process.env.URL_OFICIOS     || `${BASE_URL}/oficios`,
-  diligencias: process.env.URL_DILIGENCIAS || `${BASE_URL}/diligencias`,
+  tareas:      process.env.URL_TAREAS      || '/tareas/',
+  tareas2:     process.env.URL_TAREAS2     || '/tareas2/',
+  oficios:     process.env.URL_OFICIOS     || '/oficios',
+  diligencias: process.env.URL_DILIGENCIAS || '/diligencias',
 }
 
 app.use(helmet({ contentSecurityPolicy: false }))
