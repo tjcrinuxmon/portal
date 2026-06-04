@@ -25,12 +25,14 @@ const ROLES_TAREAS = [
 const ROLES_DILIGENCIAS = [
   { key: 'usuario',     label: 'Usuario' },
   { key: 'notificador', label: 'Notificador' },
+  { key: 'director',    label: 'Director' },
   { key: 'coordinador', label: 'Coordinador' },
 ]
 
 const ROLES_OFICIOS = [
   { key: 'admin',   label: 'Administrador' },
   { key: 'usuario', label: 'Usuario' },
+  { key: 'enlace',  label: 'Enlace' },
 ]
 
 const AREAS_OFICIOS = [
