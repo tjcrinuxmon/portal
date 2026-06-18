@@ -666,6 +666,7 @@ export default function UserManagement({ onBack, me }) {
 
                   {/* Group table */}
                   <div className="ine-card overflow-hidden">
+                    <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr style={{ background: '#F8F5FB', borderBottom: '1px solid #EDE8F4' }}>
@@ -691,6 +692,8 @@ export default function UserManagement({ onBack, me }) {
                                 : null
                           return (
                             <tr key={u.id}
+                              onClick={() => { if (window.matchMedia('(max-width: 639px)').matches) setModal(u) }}
+                              className="cursor-pointer sm:cursor-default"
                               style={{ borderBottom: i < items.length - 1 ? '1px solid #EDE8F4' : undefined }}
                               onMouseEnter={e => e.currentTarget.style.background = '#F8F5FB'}
                               onMouseLeave={e => e.currentTarget.style.background = ''}>
@@ -768,7 +771,7 @@ export default function UserManagement({ onBack, me }) {
                                   <div className="flex items-center justify-end gap-1.5">
                                     <span className="text-xs text-ine-muted mr-1">¿Eliminar?</span>
                                     <button
-                                      onClick={() => handleDelete(u.id)}
+                                      onClick={(e) => { e.stopPropagation(); handleDelete(u.id) }}
                                       disabled={deleting === u.id}
                                       className="px-2 py-1 rounded text-xs font-semibold text-white transition-colors"
                                       style={{ background: '#DC2626' }}>
@@ -777,7 +780,7 @@ export default function UserManagement({ onBack, me }) {
                                         : 'Sí, eliminar'}
                                     </button>
                                     <button
-                                      onClick={() => setConfirmDelete(null)}
+                                      onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
                                       className="px-2 py-1 rounded text-xs font-semibold transition-colors"
                                       style={{ background: '#F3F4F6', color: '#374151' }}>
                                       Cancelar
@@ -785,7 +788,7 @@ export default function UserManagement({ onBack, me }) {
                                   </div>
                                 ) : (
                                   <div className="flex items-center justify-end gap-1.5">
-                                    <button onClick={() => setModal(u)}
+                                    <button onClick={(e) => { e.stopPropagation(); setModal(u) }}
                                       className="p-1.5 rounded-lg transition-colors text-ine-dim hover:text-ine-purple hover:bg-ine-bg"
                                       title="Editar">
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -794,7 +797,7 @@ export default function UserManagement({ onBack, me }) {
                                       </svg>
                                     </button>
                                     <button
-                                      onClick={() => handleToggleActive(u)}
+                                      onClick={(e) => { e.stopPropagation(); handleToggleActive(u) }}
                                       disabled={toggling === u.id}
                                       className="p-1.5 rounded-lg transition-colors"
                                       title={u.activo ? 'Desactivar usuario' : 'Activar usuario'}
@@ -815,7 +818,7 @@ export default function UserManagement({ onBack, me }) {
                                       }
                                     </button>
                                     <button
-                                      onClick={() => setConfirmDelete(u.id)}
+                                      onClick={(e) => { e.stopPropagation(); setConfirmDelete(u.id) }}
                                       className="p-1.5 rounded-lg transition-colors text-ine-dim hover:text-red-600 hover:bg-red-50"
                                       title="Eliminar usuario">
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -831,6 +834,7 @@ export default function UserManagement({ onBack, me }) {
                         })}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 </div>
               ))}
