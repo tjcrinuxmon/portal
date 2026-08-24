@@ -43,6 +43,14 @@ try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code_expires TEXT") } catch
 try { db.exec("ALTER TABLE usuarios ADD COLUMN primer_acceso INTEGER DEFAULT 0") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN area_oficios TEXT DEFAULT ''") } catch (_) {}
 
+// ── Módulo Relevantes (Seguimiento Diario) ──────────────────────────────────
+try { db.exec("ALTER TABLE usuarios ADD COLUMN acceso_relevantes INTEGER DEFAULT 0") } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN rol_relevantes TEXT DEFAULT 'usuario'") } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN direccion_relevantes TEXT DEFAULT ''") } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN subdireccion_relevantes TEXT DEFAULT ''") } catch (_) {}
+// Los administradores del portal tienen acceso a todos los módulos (convención del seed).
+try { db.exec("UPDATE usuarios SET acceso_relevantes = 1, rol_relevantes = 'admin' WHERE rol = 'admin'") } catch (_) {}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS subdirecciones (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,

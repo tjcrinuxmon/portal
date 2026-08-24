@@ -61,6 +61,48 @@ const AREAS_DILIGENCIAS = [
   'Líder de Enlace Interinstitucional',
 ]
 
+// Catálogo del módulo Relevantes (las keys DEBEN coincidir con relevantes/catalogo.js)
+const REL_DIRECCIONES = [
+  { key: 'asuntos_hasl', label: 'Dirección de Asuntos HASL', subs: [
+    { key: 'hasl_atencion_integral', label: 'Subdirección de Atención Integral y Sensibilización' },
+    { key: 'hasl_capacitacion',      label: 'Subdirección de Capacitación, Conciliación y Seguimiento' },
+    { key: 'hasl_investigacion',     label: 'Subdirección de Investigación' },
+    { key: 'hasl_sustanciacion',     label: 'Subdirección de Sustanciación' },
+  ] },
+  { key: 'asuntos_laborales', label: 'Dirección de Asuntos Laborales', subs: [
+    { key: 'lab_litigio',  label: 'Subdirección de Litigio Laboral' },
+    { key: 'lab_recursos', label: 'Subdirección de Recursos y Consultas' },
+  ] },
+  { key: 'contratos_convenios', label: 'Dirección de Contratos y Convenios', subs: [
+    { key: 'cyc_contratos', label: 'Subdirección de Contratos' },
+    { key: 'cyc_convenios', label: 'Subdirección de Convenios' },
+  ] },
+  { key: 'instruccion_recursal', label: 'Dirección de Instrucción Recursal', subs: [
+    { key: 'ir_medios_a',     label: 'Subdirección de Atención a Medios de Impugnación A' },
+    { key: 'ir_medios_b',     label: 'Subdirección de Atención a Medios de Impugnación B' },
+    { key: 'ir_resoluciones', label: 'Subdirección de Resoluciones y Análisis' },
+    { key: 'ir_multas',       label: 'Subdirección de Seguimiento a Multas y Reintegro de Remanentes' },
+  ] },
+  { key: 'normatividad_consulta', label: 'Dirección de Normatividad y Consulta', subs: [
+    { key: 'nyc_consulta',     label: 'Subdirección de Consulta' },
+    { key: 'nyc_normatividad', label: 'Subdirección de Normatividad' },
+  ] },
+  { key: 'servicios_legales', label: 'Dirección de Servicios Legales', subs: [
+    { key: 'sl_penales',   label: 'Subdirección de Asuntos Penales' },
+    { key: 'sl_servicios', label: 'Subdirección de Servicios Legales' },
+  ] },
+  { key: 'coordinacion_administrativa', label: 'Coordinación Administrativa', subs: [
+    { key: 'coord_administrativa', label: 'Coordinación Administrativa' },
+  ] },
+  { key: 'coordinacion_analisis', label: 'Coordinación de Análisis de Información y Control Documental', subs: [
+    { key: 'coord_analisis', label: 'Coordinación de Análisis de Información y Control Documental' },
+  ] },
+]
+const ROLES_RELEVANTES = [
+  { key: 'usuario', label: 'Capturista (subdirección)' },
+  { key: 'admin',   label: 'Administrador (ve todo)' },
+]
+
 const GROUPS = [
   { key: 'admin',       label: 'Administrador',                    color: '#7C3AED' },
   { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#E4007B' },
@@ -124,6 +166,7 @@ const EMPTY = {
   acceso_tareas: false, rol_tareas: 'director', direccion_tareas: '',
   acceso_diligencias: false, rol_diligencias: 'usuario', area_diligencias: '',
   acceso_oficios: false, rol_oficios: 'usuario', area_oficios: '',
+  acceso_relevantes: false, rol_relevantes: 'usuario', direccion_relevantes: '', subdireccion_relevantes: '',
 }
 
 function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
@@ -144,6 +187,10 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     acceso_oficios:     !!user.acceso_oficios,
     rol_oficios:        user.rol_oficios      || 'usuario',
     area_oficios:       user.area_oficios     || '',
+    acceso_relevantes:  !!user.acceso_relevantes,
+    rol_relevantes:     user.rol_relevantes   || 'usuario',
+    direccion_relevantes:    user.direccion_relevantes    || '',
+    subdireccion_relevantes: user.subdireccion_relevantes || '',
   } : { ...EMPTY })
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState(null)
@@ -360,6 +407,44 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
                     </select>
                   </div>
                 </div>
+              </div>
+            )}
+          </section>
+
+          {/* ── Acceso: Relevantes ───────────────────────────────────── */}
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#FDF2F8', border: '1.5px solid #FBCFE8' }}>
+            <Toggle checked={f.acceso_relevantes} onChange={v => set('acceso_relevantes', v)} label="Acceso al Módulo de Relevantes" />
+            {f.acceso_relevantes && (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className={f.rol_relevantes === 'admin' ? 'col-span-2' : ''}>
+                  <label className="ine-label">Rol en Relevantes</label>
+                  <select className="ine-input" value={f.rol_relevantes}
+                    onChange={e => { const r = e.target.value; set('rol_relevantes', r); if (r === 'admin') { set('direccion_relevantes', ''); set('subdireccion_relevantes', '') } }}>
+                    {ROLES_RELEVANTES.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                  </select>
+                </div>
+                {f.rol_relevantes !== 'admin' && (
+                  <>
+                    <div>
+                      <label className="ine-label">Dirección</label>
+                      <select className="ine-input" value={f.direccion_relevantes}
+                        onChange={e => { set('direccion_relevantes', e.target.value); set('subdireccion_relevantes', '') }}>
+                        <option value="">— Seleccionar —</option>
+                        {REL_DIRECCIONES.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="ine-label">Subdirección (capturista)</label>
+                      <select className="ine-input" value={f.subdireccion_relevantes}
+                        onChange={e => set('subdireccion_relevantes', e.target.value)}
+                        disabled={!f.direccion_relevantes}>
+                        <option value="">— Seleccionar subdirección —</option>
+                        {(REL_DIRECCIONES.find(d => d.key === f.direccion_relevantes)?.subs || [])
+                          .map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </section>
@@ -675,6 +760,7 @@ export default function UserManagement({ onBack, me }) {
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden md:table-cell">Dirección de Área</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Notificaciones</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">SiCoDEAJ</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Relevantes</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Estado</th>
                           <th className="px-4 py-2.5 text-right text-xs font-bold text-ine-muted uppercase tracking-wide">Acciones</th>
                         </tr>
@@ -752,6 +838,13 @@ export default function UserManagement({ onBack, me }) {
                               <td className="px-4 py-3 hidden sm:table-cell">
                                 {u.acceso_oficios
                                   ? <AppBadge label={u.rol_oficios} color="#047857" />
+                                  : <span className="text-xs text-ine-dim">—</span>}
+                              </td>
+
+                              {/* Relevantes */}
+                              <td className="px-4 py-3 hidden sm:table-cell">
+                                {u.acceso_relevantes
+                                  ? <AppBadge label={u.rol_relevantes === 'admin' ? 'admin' : 'capturista'} color="#E4007B" />
                                   : <span className="text-xs text-ine-dim">—</span>}
                               </td>
 

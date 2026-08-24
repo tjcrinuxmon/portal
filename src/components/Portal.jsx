@@ -45,6 +45,19 @@ const APPS = [
       </svg>
     ),
   },
+  {
+    key: 'relevantes',
+    title: 'Módulo de Relevantes',
+    desc: 'Seguimiento diario de asuntos relevantes por subdirección: captura, tablero semanal e indicadores.',
+    color: '#E4007B',
+    bg: '#FDF2F8',
+    border: '#FBCFE8',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21.4 8 14 2 9.4h7.6z" />
+      </svg>
+    ),
+  },
 ]
 
 const ACCESS_KEY = {
@@ -52,6 +65,7 @@ const ACCESS_KEY = {
   tareas2:     'acceso_tareas',
   diligencias: 'acceso_diligencias',
   oficios:     'acceso_oficios',
+  relevantes:  'acceso_relevantes',
 }
 
 export default function Portal({ user, onLogout, onManageUsers }) {
