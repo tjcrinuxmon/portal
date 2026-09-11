@@ -6,7 +6,7 @@ const APPS = [
     key: 'tareas2',
     title: 'Módulo de Tareas',
     desc: 'Seguimiento de tareas y actividades de la Dirección Ejecutiva de Asuntos Jurídicos.',
-    color: '#7040A0',
+    color: '#9680B4',
     bg: '#F5F0FB',
     border: '#D9C8EE',
     icon: (
@@ -49,7 +49,7 @@ const APPS = [
     key: 'relevantes',
     title: 'Módulo de Relevantes',
     desc: 'Seguimiento diario de asuntos relevantes por subdirección: captura, tablero semanal e indicadores.',
-    color: '#E4007B',
+    color: '#49276F',
     bg: '#FDF2F8',
     border: '#FBCFE8',
     icon: (
@@ -90,11 +90,11 @@ export default function Portal({ user, onLogout, onManageUsers }) {
       {/* Header */}
       <header className="bg-white flex items-center px-6 h-14 flex-shrink-0"
         style={{ borderBottom:'1px solid #E2D9EE', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
-        <div className="flex items-center gap-2.5 mr-auto">
-          <div className="w-7 h-7 rounded flex items-center justify-center text-white text-xs font-black"
-            style={{ background:'#582E73' }}>INE</div>
-          <div>
-            <p className="text-sm font-black text-ine-purple leading-none">INE · DEAJ</p>
+        <div className="flex items-center gap-3 mr-auto">
+          <img src="/logo-ine-reducido.svg" alt="Instituto Nacional Electoral"
+            style={{ height: 22, width: 'auto', display: 'block' }} />
+          <div className="pl-3" style={{ borderLeft:'1px solid #E2D9EE' }}>
+            <p className="text-sm font-black text-ine-purple leading-none">DEAJ</p>
             <p className="text-xs text-ine-muted leading-none mt-0.5">Sistema de Control Documental</p>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function Portal({ user, onLogout, onManageUsers }) {
           )}
           <div className="flex items-center gap-2 pl-3" style={{ borderLeft:'1px solid #E2D9EE' }}>
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-              style={{ background:'#582E73' }}>
+              style={{ background:'#674092' }}>
               {user.nombre.charAt(0).toUpperCase()}
             </div>
             <span className="text-xs font-semibold text-ine-text hidden sm:block">{user.nombre}</span>

@@ -16,8 +16,8 @@ const DIRECCIONES = [
 
 const ROLES_TAREAS = [
   { key: 'admin',       label: 'Administrador',                    color: '#7C3AED' },
-  { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#E4007B' },
-  { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#582E73' },
+  { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#49276F' },
+  { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#674092' },
   { key: 'subdirector', label: 'Subdirector/a',                    color: '#2563EB' },
   { key: 'secretaria',  label: 'Secretaría Particular',            color: '#EC4899' },
 ]
@@ -105,8 +105,8 @@ const ROLES_RELEVANTES = [
 
 const GROUPS = [
   { key: 'admin',       label: 'Administrador',                    color: '#7C3AED' },
-  { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#E4007B' },
-  { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#582E73' },
+  { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#49276F' },
+  { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#674092' },
   { key: 'subdirector', label: 'Subdirector/a',                    color: '#2563EB' },
   { key: 'secretaria',  label: 'Secretaría Particular',            color: '#EC4899' },
   { key: null,          label: 'Sin acceso a Tareas',              color: '#6B7280' },
@@ -125,7 +125,7 @@ const AREA_COLORS = {
   'Secretaría Particular':                                      '#EC4899',
   'Coordinación de Análisis de Información y Control Documental': '#6366F1',
   'Líder de Enlace Interinstitucional':                         '#F97316',
-  'Dirección Ejecutiva de Asuntos Jurídicos':                   '#582E73',
+  'Dirección Ejecutiva de Asuntos Jurídicos':                   '#674092',
 }
 const needsPuesto    = (rol) => rol === 'subdirector'
 const dirCfg         = (key) => DIRECCIONES.find(d => d.key === key)
@@ -137,7 +137,7 @@ function Toggle({ checked, onChange, label }) {
     <label className="flex items-center gap-2.5 cursor-pointer select-none">
       <div onClick={() => onChange(!checked)}
         className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-        style={{ background: checked ? '#582E73' : '#D1C4E2', cursor: 'pointer' }}>
+        style={{ background: checked ? '#674092' : '#D1C4E2', cursor: 'pointer' }}>
         <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
           style={{ transform: checked ? 'translateX(16px)' : 'translateX(0)' }} />
       </div>
@@ -225,7 +225,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
       style={{ background: 'rgba(42,18,57,.45)', backdropFilter: 'blur(4px)' }}>
       <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden fade-in"
-        style={{ border: '1.5px solid #E2D9EE', boxShadow: '0 20px 60px rgba(88,46,115,.20)' }}>
+        style={{ border: '1.5px solid #E2D9EE', boxShadow: '0 20px 60px rgba(103,64,146,.20)' }}>
 
         {/* Color bar */}
         <div className="h-1 flex-shrink-0" style={{ background: roleColor }} />
@@ -291,7 +291,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
               </div>
             ) : (
               <div className="col-span-2 flex items-start gap-2.5 rounded-lg px-4 py-3"
-                style={{ background: 'rgba(88,46,115,.06)', border: '1px solid #E2D9EE' }}>
+                style={{ background: 'rgba(103,64,146,.06)', border: '1px solid #E2D9EE' }}>
                 <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-ine-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -590,7 +590,7 @@ function SubdireccionesPanel({ subdirecciones = [], onRefresh }) {
                             onClick={() => handleEditSave(s.id)}
                             disabled={savingId === s.id}
                             className="p-1 rounded text-white transition-colors flex-shrink-0"
-                            style={{ background: '#582E73' }}
+                            style={{ background: '#674092' }}
                             title="Guardar">
                             {savingId === s.id
                               ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -731,7 +731,7 @@ export default function UserManagement({ onBack, me }) {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="w-10 h-10 border-4 rounded-full animate-spin mb-3"
-                style={{ borderColor: '#E2D9EE', borderTopColor: '#582E73' }} />
+                style={{ borderColor: '#E2D9EE', borderTopColor: '#674092' }} />
               <p className="text-ine-muted text-sm">Cargando usuarios…</p>
             </div>
           ) : (
@@ -796,7 +796,7 @@ export default function UserManagement({ onBack, me }) {
                                       <span className="text-sm font-semibold text-ine-text">{u.nombre}</span>
                                       {u.rol === 'admin' && (
                                         <span className="text-xs px-1.5 py-0.5 rounded font-bold"
-                                          style={{ background: '#EDE8F4', color: '#582E73' }}>ADMIN</span>
+                                          style={{ background: '#EDE8F4', color: '#674092' }}>ADMIN</span>
                                       )}
                                     </div>
                                     {needsPuesto(u.rol_tareas) && u.puesto && (
@@ -844,7 +844,7 @@ export default function UserManagement({ onBack, me }) {
                               {/* Relevantes */}
                               <td className="px-4 py-3 hidden sm:table-cell">
                                 {u.acceso_relevantes
-                                  ? <AppBadge label={u.rol_relevantes === 'admin' ? 'admin' : 'capturista'} color="#E4007B" />
+                                  ? <AppBadge label={u.rol_relevantes === 'admin' ? 'admin' : 'capturista'} color="#49276F" />
                                   : <span className="text-xs text-ine-dim">—</span>}
                               </td>
 
@@ -938,7 +938,7 @@ export default function UserManagement({ onBack, me }) {
           {isAdmin && (
             <div>
               <div className="flex items-center gap-2.5 mb-3">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#582E73' }} />
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#674092' }} />
                 <h3 className="text-sm font-bold text-ine-text">Catálogo de Subdirecciones</h3>
                 <div className="flex-1 h-px bg-ine-border" />
               </div>

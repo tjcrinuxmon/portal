@@ -42,26 +42,19 @@ export default function ResetPassword({ token, onDone }) {
   return (
     <div className="min-h-screen bg-ine-bg flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-xl overflow-hidden"
-        style={{ border:'1.5px solid #E2D9EE', borderTop:'4px solid #582E73',
-          boxShadow:'0 8px 40px rgba(88,46,115,.13), 0 2px 8px rgba(0,0,0,.05)' }}>
+        style={{ border:'1.5px solid #E2D9EE', borderTop:'4px solid #674092',
+          boxShadow:'0 8px 40px rgba(103,64,146,.13), 0 2px 8px rgba(0,0,0,.05)' }}>
 
         <div className="px-10 pt-10 pb-6 flex flex-col items-center">
-          <div className="inline-flex items-center gap-4 mb-5">
-            <BrandLogo size={52} />
-            <div className="text-left">
-              <p className="text-2xl font-black leading-none tracking-tight" style={{ color:'#575453' }}>DEAJ</p>
-              <p className="text-xs font-semibold mt-1.5 leading-snug" style={{ color:'#D5007F' }}>
-                Sistema de Control Documental
-              </p>
-            </div>
-          </div>
+          <BrandLogo width={200} className="mb-3" />
+          <p className="text-xs text-ine-dim">Sistema de Control Documental</p>
         </div>
 
         <div className="px-10 pb-10">
           {status === 'loading' && (
             <div className="flex flex-col items-center py-8 gap-3">
               <div className="w-8 h-8 border-4 rounded-full animate-spin"
-                style={{ borderColor:'#E2D9EE', borderTopColor:'#582E73' }} />
+                style={{ borderColor:'#E2D9EE', borderTopColor:'#674092' }} />
               <p className="text-sm text-ine-muted">Validando enlace…</p>
             </div>
           )}

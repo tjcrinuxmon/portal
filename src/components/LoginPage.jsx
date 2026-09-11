@@ -37,27 +37,19 @@ export default function LoginPage({ onLogin, onForgot }) {
   return (
     <div className="min-h-screen bg-ine-bg flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-xl overflow-hidden"
-        style={{ border:'1.5px solid #E2D9EE', borderTop:'4px solid #582E73',
-          boxShadow:'0 8px 40px rgba(88,46,115,.13), 0 2px 8px rgba(0,0,0,.05)' }}>
+        style={{ border:'1.5px solid #E2D9EE', borderTop:'4px solid #674092',
+          boxShadow:'0 8px 40px rgba(103,64,146,.13), 0 2px 8px rgba(0,0,0,.05)' }}>
 
         <div className="px-10 pt-10 pb-6 flex flex-col items-center">
-          <div className="inline-flex items-center gap-4 mb-5">
-            <BrandLogo size={52} />
-            <div className="text-left">
-              <p className="text-2xl font-black leading-none tracking-tight" style={{ color:'#575453' }}>DEAJ</p>
-              <p className="text-xs font-semibold mt-1.5 leading-snug" style={{ color:'#D5007F' }}>
-                Sistema de Control Documental
-              </p>
-            </div>
-          </div>
+          <BrandLogo width={200} className="mb-5" />
           <div className="w-full flex items-center gap-2 mb-1.5">
             <div className="flex-1 h-px bg-ine-border" />
             <p className="text-xs font-semibold text-ine-muted uppercase tracking-wider px-2 whitespace-nowrap">
-              Instituto Nacional Electoral
+              Dirección Ejecutiva de Asuntos Jurídicos
             </p>
             <div className="flex-1 h-px bg-ine-border" />
           </div>
-          <p className="text-xs text-ine-dim">Dirección Ejecutiva de Asuntos Jurídicos</p>
+          <p className="text-xs text-ine-dim">Sistema de Control Documental</p>
         </div>
 
         <div className="px-10 pb-10">
@@ -116,13 +108,13 @@ export default function LoginPage({ onLogin, onForgot }) {
             <div className="flex justify-between items-center">
               {primerAcceso && (
                 <button type="button" onClick={onForgot}
-                  className="text-xs font-semibold hover:underline transition-colors" style={{ color:'#D5007F' }}>
+                  className="text-xs font-semibold hover:underline transition-colors" style={{ color:'#674092' }}>
                   Primera vez aquí
                 </button>
               )}
               <button type="button" onClick={onForgot}
                 className={`text-xs font-semibold hover:underline transition-colors${primerAcceso ? '' : ' ml-auto'}`}
-                style={{ color:'#582E73' }}>
+                style={{ color:'#674092' }}>
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
