@@ -727,7 +727,7 @@ export default function UserManagement({ onBack, me }) {
       </header>
 
       <main className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-[1600px] mx-auto space-y-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="w-10 h-10 border-4 rounded-full animate-spin mb-3"
@@ -812,16 +812,16 @@ export default function UserManagement({ onBack, me }) {
                               </td>
 
                               {/* Dirección / Área */}
-                              <td className="px-4 py-3 hidden md:table-cell">
+                              <td className="px-4 py-3 hidden md:table-cell" style={{ maxWidth: 200 }}>
                                 {areaLabel ? (() => {
                                   const color = (dir && u.acceso_tareas && needsDireccion(u.rol_tareas))
                                     ? dir.color
                                     : (AREA_COLORS[areaLabel] || '#6B7280')
                                   return (
-                                    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
-                                      style={{ background: color + '18', color }}>
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full max-w-full"
+                                      style={{ background: color + '18', color }} title={areaLabel}>
                                       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                                      {areaLabel}
+                                      <span className="truncate">{areaLabel}</span>
                                     </span>
                                   )
                                 })() : <span className="text-xs text-ine-dim">—</span>}
