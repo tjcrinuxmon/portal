@@ -55,15 +55,15 @@ function CodeInput({ onComplete }) {
           style={{
             width: '44px', height: '52px',
             textAlign: 'center', fontSize: '22px', fontWeight: '700',
-            border: `2px solid ${d ? '#674092' : '#D1C4E2'}`,
+            border: `2px solid ${d ? '#454247' : '#D6D2CD'}`,
             borderRadius: '8px', outline: 'none',
-            background: d ? '#F8F5FB' : '#fff',
-            color: '#2A1239',
+            background: d ? '#F7F5F3' : '#fff',
+            color: '#000000',
             transition: 'border-color .15s',
             fontFamily: 'monospace',
           }}
-          onFocus={e => e.target.style.borderColor = '#674092'}
-          onBlur={e => e.target.style.borderColor = d ? '#674092' : '#D1C4E2'}
+          onFocus={e => e.target.style.borderColor = '#454247'}
+          onBlur={e => e.target.style.borderColor = d ? '#454247' : '#D6D2CD'}
         />
       ))}
     </div>
@@ -149,8 +149,8 @@ export default function ForgotPassword({ onBack }) {
   return (
     <div className="min-h-screen bg-ine-bg flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-xl overflow-hidden"
-        style={{ border:'1.5px solid #E2D9EE', borderTop:'4px solid #674092',
-          boxShadow:'0 8px 40px rgba(103,64,146,.13), 0 2px 8px rgba(0,0,0,.05)' }}>
+        style={{ border:'1.5px solid #E3DFDA', borderTop:'4px solid #454247',
+          boxShadow:'0 8px 40px rgba(0,0,0,.13), 0 2px 8px rgba(0,0,0,.05)' }}>
 
         {/* Header */}
         <div className="px-10 pt-8 pb-5 flex flex-col items-center">
@@ -163,14 +163,14 @@ export default function ForgotPassword({ onBack }) {
                 <React.Fragment key={s}>
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
                     style={{
-                      background: step === s ? '#674092' : ['email','code','password'].indexOf(step) > i ? '#C4B0DA' : '#EDE8F4',
+                      background: step === s ? '#454247' : ['email','code','password'].indexOf(step) > i ? '#C5C9CC' : '#EDEAE6',
                       color: step === s || ['email','code','password'].indexOf(step) > i ? '#fff' : '#9B8AB5',
                     }}>
                     {['email','code','password'].indexOf(step) > i
                       ? <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                       : i + 1}
                   </div>
-                  {i < 2 && <div className="w-6 h-px" style={{ background: ['email','code','password'].indexOf(step) > i ? '#C4B0DA' : '#EDE8F4' }} />}
+                  {i < 2 && <div className="w-6 h-px" style={{ background: ['email','code','password'].indexOf(step) > i ? '#C5C9CC' : '#EDEAE6' }} />}
                 </React.Fragment>
               ))}
             </div>
@@ -222,7 +222,7 @@ export default function ForgotPassword({ onBack }) {
               <CodeInput key={error} onComplete={c => { setCode(c); handleVerifyCode(c) }} />
               {loading && (
                 <div className="flex justify-center mb-3">
-                  <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor:'#E2D9EE', borderTopColor:'#674092' }} />
+                  <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor:'#E3DFDA', borderTopColor:'#454247' }} />
                 </div>
               )}
               <div className="flex items-center justify-between mt-2">
@@ -233,7 +233,7 @@ export default function ForgotPassword({ onBack }) {
                 {resendCd > 0
                   ? <span className="text-xs text-ine-dim">Reenviar en {resendCd}s</span>
                   : <button onClick={handleSendCode} disabled={loading}
-                      className="text-xs font-semibold hover:text-ine-purple transition-colors" style={{ color:'#674092' }}>
+                      className="text-xs font-semibold hover:text-ine-purple transition-colors" style={{ color:'#454247' }}>
                       Reenviar código
                     </button>
                 }

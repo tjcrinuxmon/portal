@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo-ine-reducido.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>INE · DEAJ — SiCoDEAJ</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,19 +11,20 @@
         theme: {
           extend: {
             colors: {
-              'ine-purple':       '#674092',
-              'ine-purple-dark':  '#49276F',
-              'ine-purple-xdark': '#2A1239',
-              'ine-purple-light': '#9680B4',
-              'ine-magenta':      '#49276F',
-              'ine-magenta-dark': '#49276F',
-              'ine-bg':           '#F8F5FB',
-              'ine-bg-hover':     '#F3EDF9',
-              'ine-border':       '#E2D9EE',
-              'ine-border-light': '#EDE8F4',
-              'ine-text':         '#1A1219',
-              'ine-muted':        '#6B5F78',
-              'ine-dim':          '#A090B0',
+              // Paleta institucional (Manual de Identidad Institucional 2026, sección 2.3).
+              'ine-purple':       '#454247', // Gris Oxford — color dominante
+              'ine-purple-dark':  '#000000', // Negro — hover/estado activo
+              'ine-purple-xdark': '#454247', // Gris Oxford — chrome de mayor jerarquía (header/footer)
+              'ine-purple-light': '#828A91', // Gris medio
+              'ine-magenta':      '#000000',
+              'ine-magenta-dark': '#000000',
+              'ine-bg':           '#F7F5F3',
+              'ine-bg-hover':     '#EFEBE7',
+              'ine-border':       '#E3DFDA',
+              'ine-border-light': '#EDEAE6',
+              'ine-text':         '#000000',
+              'ine-muted':        '#828A91', // Gris medio — "gris se utiliza... en textos y elementos secundarios"
+              'ine-dim':          '#B2B2B2', // Gris — acento
             },
             fontFamily: { sans: ['Arial', 'Helvetica', 'system-ui', 'sans-serif'] },
           }
@@ -35,44 +36,44 @@
       body { font-family: Arial, Helvetica, system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
       input, select, textarea, button { font-family: Arial, Helvetica, system-ui, sans-serif; }
       ::-webkit-scrollbar { width: 6px; height: 6px; }
-      ::-webkit-scrollbar-track { background: #EDE8F4; }
-      ::-webkit-scrollbar-thumb { background: #C4A8DC; border-radius: 3px; }
-      ::-webkit-scrollbar-thumb:hover { background: #9B7BB8; }
+      ::-webkit-scrollbar-track { background: #EDEAE6; }
+      ::-webkit-scrollbar-thumb { background: #C5C9CC; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #828A91; }
       @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
       .fade-in { animation: fadeIn 0.2s ease-out; }
       .btn-ine {
-        background: #674092; color: white; padding: 10px 20px; border-radius: 6px;
-        font-size: 13px; font-weight: 600; box-shadow: 0 2px 6px rgba(103,64,146,.30);
+        background: #454247; color: white; padding: 10px 20px; border-radius: 6px;
+        font-size: 13px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.25);
         transition: background .18s, box-shadow .18s, transform .18s;
         border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
       }
-      .btn-ine:hover { background: #49276F; box-shadow: 0 4px 14px rgba(103,64,146,.40); transform: translateY(-1px); }
-      .btn-ine:active { background: #2A1239; transform: translateY(0); }
+      .btn-ine:hover { background: #000000; box-shadow: 0 4px 14px rgba(0,0,0,.35); transform: translateY(-1px); }
+      .btn-ine:active { background: #000000; transform: translateY(0); }
       .btn-ine:disabled { opacity: 0.45; transform: none; cursor: not-allowed; box-shadow: none; }
       .btn-outline {
-        background: white; color: #674092; border: 1.5px solid #674092;
+        background: white; color: #454247; border: 1.5px solid #454247;
         padding: 9px 19px; border-radius: 6px; font-size: 13px; font-weight: 600;
         cursor: pointer; transition: all .18s; display: inline-flex; align-items: center; gap: 6px;
       }
-      .btn-outline:hover { background: rgba(103,64,146,.06); }
+      .btn-outline:hover { background: rgba(0,0,0,.05); }
       .btn-ghost {
-        background: transparent; color: #6B5F78; border: none; padding: 6px 12px;
+        background: transparent; color: #828A91; border: none; padding: 6px 12px;
         border-radius: 6px; font-size: 13px; cursor: pointer; transition: all .15s;
         display: inline-flex; align-items: center; gap: 6px;
       }
-      .btn-ghost:hover { background: #F3EDF9; color: #674092; }
+      .btn-ghost:hover { background: #EFEBE7; color: #454247; }
       .ine-card {
-        background: white; border: 1.5px solid #E2D9EE;
-        border-radius: 10px; box-shadow: 0 2px 8px rgba(103,64,146,.07);
+        background: white; border: 1.5px solid #E3DFDA;
+        border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.06);
       }
       .ine-input {
-        background: white; border: 1.5px solid #E2D9EE; border-radius: 6px;
+        background: white; border: 1.5px solid #E3DFDA; border-radius: 6px;
         font-size: 14px; padding: 10px 14px; width: 100%; font-family: inherit;
-        color: #1A1219; transition: border-color .15s, box-shadow .15s; outline: none;
+        color: #000000; transition: border-color .15s, box-shadow .15s; outline: none;
       }
-      .ine-input:focus { border-color: #674092; box-shadow: 0 0 0 3px rgba(103,64,146,.13); }
-      .ine-input::placeholder { color: #A090B0; }
-      .ine-label { font-size: 12px; font-weight: 700; color: #575453; display: block; margin-bottom: 8px; }
+      .ine-input:focus { border-color: #454247; box-shadow: 0 0 0 3px rgba(0,0,0,.10); }
+      .ine-input::placeholder { color: #B2B2B2; }
+      .ine-label { font-size: 12px; font-weight: 700; color: #454247; display: block; margin-bottom: 8px; }
     </style>
   </head>
   <body class="bg-ine-bg text-ine-text">

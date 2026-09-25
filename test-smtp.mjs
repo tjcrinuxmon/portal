@@ -40,7 +40,7 @@ try {
     subject: '✅ Prueba de correo — Portal DEAJ',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;padding:24px">
-        <h2 style="color:#582E73">Prueba exitosa</h2>
+        <h2 style="color:#454247">Prueba exitosa</h2>
         <p>Este correo confirma que el servidor SMTP está configurado correctamente.</p>
         <table style="font-size:13px;border-collapse:collapse;width:100%">
           <tr><td style="padding:4px 8px;font-weight:bold;color:#555">Host</td><td style="padding:4px 8px">${process.env.EMAIL_HOST}</td></tr>

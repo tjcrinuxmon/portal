@@ -37,8 +37,8 @@ export default function LoginPage({ onLogin, onForgot }) {
   return (
     <div className="min-h-screen bg-ine-bg flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-xl overflow-hidden"
-        style={{ border:'1.5px solid #E2D9EE', borderTop:'4px solid #674092',
-          boxShadow:'0 8px 40px rgba(103,64,146,.13), 0 2px 8px rgba(0,0,0,.05)' }}>
+        style={{ border:'1.5px solid #E3DFDA', borderTop:'4px solid #C5A989',
+          boxShadow:'0 8px 40px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.05)' }}>
 
         <div className="px-10 pt-10 pb-6 flex flex-col items-center">
           <BrandLogo width={200} className="mb-5" />
@@ -108,13 +108,13 @@ export default function LoginPage({ onLogin, onForgot }) {
             <div className="flex justify-between items-center">
               {primerAcceso && (
                 <button type="button" onClick={onForgot}
-                  className="text-xs font-semibold hover:underline transition-colors" style={{ color:'#674092' }}>
+                  className="text-xs font-semibold hover:underline transition-colors" style={{ color:'#454247' }}>
                   Primera vez aquí
                 </button>
               )}
               <button type="button" onClick={onForgot}
                 className={`text-xs font-semibold hover:underline transition-colors${primerAcceso ? '' : ' ml-auto'}`}
-                style={{ color:'#674092' }}>
+                style={{ color:'#454247' }}>
                 ¿Olvidaste tu contraseña?
               </button>
             </div>

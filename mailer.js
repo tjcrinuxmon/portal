@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 
 function header() {
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#582E73">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#454247">
       <tr>
         <td style="padding:16px 28px;">
           <span style="color:#ffffff;font-size:18px;font-weight:bold;font-family:Arial,sans-serif;letter-spacing:-0.5px;">INE &middot; DEAJ</span>
@@ -27,7 +27,7 @@ function footer() {
   return `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="padding:16px 28px;border-top:1px solid #E2D9EE;">
+        <td style="padding:16px 28px;border-top:1px solid #E3DFDA;">
           <p style="margin:0;font-size:11px;color:#aaaaaa;font-family:Arial,sans-serif;">
             Instituto Nacional Electoral &mdash; Direcci&oacute;n Ejecutiva de Asuntos Jur&iacute;dicos
           </p>
@@ -40,7 +40,7 @@ export async function sendResetCode({ nombre, email, code }) {
   const digits = String(code).split('')
   const digitCells = digits.map(d =>
     `<td width="36" height="46" align="center" valign="middle"
-        style="width:36px;height:46px;background-color:#F8F5FB;border:1px solid #C4B0DA;font-size:26px;font-weight:bold;font-family:Courier New,monospace;color:#582E73;text-align:center;">
+        style="width:36px;height:46px;background-color:#F7F5F3;border:1px solid #C5C9CC;font-size:26px;font-weight:bold;font-family:Courier New,monospace;color:#454247;text-align:center;">
       ${d}
     </td>
     <td width="6" style="width:6px;"></td>`
@@ -53,15 +53,15 @@ export async function sendResetCode({ nombre, email, code }) {
     html: `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background-color:#F4F0F8;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F4F0F8">
+<body style="margin:0;padding:0;background-color:#F7F5F3;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F7F5F3">
   <tr>
     <td align="center" style="padding:32px 16px;">
-      <table width="540" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border:1px solid #E2D9EE;">
+      <table width="540" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border:1px solid #E3DFDA;">
         <tr><td>${header()}</td></tr>
         <tr>
           <td style="padding:28px 28px 8px 28px;">
-            <p style="margin:0 0 8px 0;font-size:16px;font-weight:bold;color:#2A1239;font-family:Arial,sans-serif;">
+            <p style="margin:0 0 8px 0;font-size:16px;font-weight:bold;color:#000000;font-family:Arial,sans-serif;">
               Hola, ${nombre}
             </p>
             <p style="margin:0 0 24px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">
@@ -111,15 +111,15 @@ export async function sendWelcomeEmail({ nombre, email }) {
     html: `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background-color:#F4F0F8;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F4F0F8">
+<body style="margin:0;padding:0;background-color:#F7F5F3;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F7F5F3">
   <tr>
     <td align="center" style="padding:32px 16px;">
-      <table width="540" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border:1px solid #E2D9EE;">
+      <table width="540" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border:1px solid #E3DFDA;">
         <tr><td>${header()}</td></tr>
         <tr>
           <td style="padding:28px 28px 20px 28px;">
-            <p style="margin:0 0 8px 0;font-size:16px;font-weight:bold;color:#2A1239;font-family:Arial,sans-serif;">
+            <p style="margin:0 0 8px 0;font-size:16px;font-weight:bold;color:#000000;font-family:Arial,sans-serif;">
               Hola, ${nombre}
             </p>
             <p style="margin:0 0 16px 0;font-size:14px;color:#555555;font-family:Arial,sans-serif;line-height:1.6;">

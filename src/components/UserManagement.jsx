@@ -16,8 +16,8 @@ const DIRECCIONES = [
 
 const ROLES_TAREAS = [
   { key: 'admin',       label: 'Administrador',                    color: '#7C3AED' },
-  { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#49276F' },
-  { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#674092' },
+  { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#000000' },
+  { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#454247' },
   { key: 'subdirector', label: 'Subdirector/a',                    color: '#2563EB' },
   { key: 'secretaria',  label: 'Secretaría Particular',            color: '#EC4899' },
 ]
@@ -98,6 +98,19 @@ const REL_DIRECCIONES = [
     { key: 'coord_analisis', label: 'Coordinación de Análisis de Información y Control Documental' },
   ] },
 ]
+
+// Catálogo del módulo Criterios (las keys DEBEN coincidir con criterios/catalogo.js)
+const CRIT_MATERIAS = [
+  { key: 'asuntos_hasl',         label: 'Dirección de Asuntos HASL' },
+  { key: 'asuntos_laborales',    label: 'Dirección de Asuntos Laborales' },
+  { key: 'instruccion_recursal', label: 'Dirección de Instrucción Recursal' },
+]
+
+const ROLES_CRITERIOS = [
+  { key: 'usuario',   label: 'Capturista (su materia)' },
+  { key: 'aprobador', label: 'Aprobador (su materia)' },
+  { key: 'admin',     label: 'Administrador (ve todo)' },
+]
 const ROLES_RELEVANTES = [
   { key: 'usuario', label: 'Capturista (subdirección)' },
   { key: 'admin',   label: 'Administrador (ve todo)' },
@@ -105,8 +118,8 @@ const ROLES_RELEVANTES = [
 
 const GROUPS = [
   { key: 'admin',       label: 'Administrador',                    color: '#7C3AED' },
-  { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#49276F' },
-  { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#674092' },
+  { key: 'ejecutiva',   label: 'Directora Ejecutiva',              color: '#000000' },
+  { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#454247' },
   { key: 'subdirector', label: 'Subdirector/a',                    color: '#2563EB' },
   { key: 'secretaria',  label: 'Secretaría Particular',            color: '#EC4899' },
   { key: null,          label: 'Sin acceso a Tareas',              color: '#6B7280' },
@@ -125,7 +138,7 @@ const AREA_COLORS = {
   'Secretaría Particular':                                      '#EC4899',
   'Coordinación de Análisis de Información y Control Documental': '#6366F1',
   'Líder de Enlace Interinstitucional':                         '#F97316',
-  'Dirección Ejecutiva de Asuntos Jurídicos':                   '#674092',
+  'Dirección Ejecutiva de Asuntos Jurídicos':                   '#454247',
 }
 const needsPuesto    = (rol) => rol === 'subdirector'
 const dirCfg         = (key) => DIRECCIONES.find(d => d.key === key)
@@ -137,7 +150,7 @@ function Toggle({ checked, onChange, label }) {
     <label className="flex items-center gap-2.5 cursor-pointer select-none">
       <div onClick={() => onChange(!checked)}
         className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-        style={{ background: checked ? '#674092' : '#D1C4E2', cursor: 'pointer' }}>
+        style={{ background: checked ? '#454247' : '#D6D2CD', cursor: 'pointer' }}>
         <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
           style={{ transform: checked ? 'translateX(16px)' : 'translateX(0)' }} />
       </div>
@@ -167,6 +180,7 @@ const EMPTY = {
   acceso_diligencias: false, rol_diligencias: 'usuario', area_diligencias: '',
   acceso_oficios: false, rol_oficios: 'usuario', area_oficios: '',
   acceso_relevantes: false, rol_relevantes: 'usuario', direccion_relevantes: '', subdireccion_relevantes: '',
+  acceso_criterios: false, rol_criterios: 'usuario', materia_criterios: '',
 }
 
 function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
@@ -191,6 +205,9 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     rol_relevantes:     user.rol_relevantes   || 'usuario',
     direccion_relevantes:    user.direccion_relevantes    || '',
     subdireccion_relevantes: user.subdireccion_relevantes || '',
+    acceso_criterios:   !!user.acceso_criterios,
+    rol_criterios:      user.rol_criterios      || 'usuario',
+    materia_criterios:  user.materia_criterios  || '',
   } : { ...EMPTY })
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState(null)
@@ -225,14 +242,14 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
       style={{ background: 'rgba(42,18,57,.45)', backdropFilter: 'blur(4px)' }}>
       <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden fade-in"
-        style={{ border: '1.5px solid #E2D9EE', boxShadow: '0 20px 60px rgba(103,64,146,.20)' }}>
+        style={{ border: '1.5px solid #E3DFDA', boxShadow: '0 20px 60px rgba(0,0,0,.20)' }}>
 
         {/* Color bar */}
         <div className="h-1 flex-shrink-0" style={{ background: roleColor }} />
 
         {/* Header */}
         <div className="px-6 py-4 flex items-center justify-between flex-shrink-0"
-          style={{ borderBottom: '1px solid #EDE8F4' }}>
+          style={{ borderBottom: '1px solid #EDEAE6' }}>
           <h3 className="text-base font-bold text-ine-text">
             {isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}
           </h3>
@@ -291,7 +308,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
               </div>
             ) : (
               <div className="col-span-2 flex items-start gap-2.5 rounded-lg px-4 py-3"
-                style={{ background: 'rgba(103,64,146,.06)', border: '1px solid #E2D9EE' }}>
+                style={{ background: 'rgba(0,0,0,.06)', border: '1px solid #E3DFDA' }}>
                 <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-ine-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -310,7 +327,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
             </div>
             {isEdit && (
               <div className="col-span-2 flex items-center justify-between rounded-lg px-4 py-3"
-                style={{ background: '#F8F5FB', border: '1.5px solid #E2D9EE' }}>
+                style={{ background: '#F7F5F3', border: '1.5px solid #E3DFDA' }}>
                 <span className="text-sm font-medium text-ine-text">Cuenta activa</span>
                 <Toggle checked={!!f.activo} onChange={v => set('activo', v)} label={f.activo ? 'Activo' : 'Inactivo'} />
               </div>
@@ -318,7 +335,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
           </div>
 
           {/* ── Acceso: Tareas ───────────────────────────────────────── */}
-          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F8F5FB', border: '1.5px solid #E2D9EE' }}>
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F7F5F3', border: '1.5px solid #E3DFDA' }}>
             <Toggle checked={f.acceso_tareas} onChange={v => set('acceso_tareas', v)} label="Acceso al Sistema de Tareas" />
             {f.acceso_tareas && (
               <div className="grid grid-cols-2 gap-3 pt-1">
@@ -360,7 +377,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
           </section>
 
           {/* ── Acceso: Diligencias ──────────────────────────────────── */}
-          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F0F9FF', border: '1.5px solid #BAE6FD' }}>
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F7F5F3', border: '1.5px solid #E3DFDA' }}>
             <Toggle checked={f.acceso_diligencias} onChange={v => set('acceso_diligencias', v)} label="Acceso al Sistema de Notificaciones" />
             {f.acceso_diligencias && (
               <div className="grid grid-cols-2 gap-3 pt-1">
@@ -388,7 +405,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
           </section>
 
           {/* ── Acceso: Oficios ──────────────────────────────────────── */}
-          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F0FDF4', border: '1.5px solid #BBF7D0' }}>
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F7F5F3', border: '1.5px solid #E3DFDA' }}>
             <Toggle checked={f.acceso_oficios} onChange={v => set('acceso_oficios', v)} label="Acceso a SiCoDEAJ" />
             {f.acceso_oficios && (
               <div className="pt-1 space-y-3">
@@ -412,7 +429,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
           </section>
 
           {/* ── Acceso: Relevantes ───────────────────────────────────── */}
-          <section className="rounded-xl p-4 space-y-3" style={{ background: '#FDF2F8', border: '1.5px solid #FBCFE8' }}>
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F7F5F3', border: '1.5px solid #E3DFDA' }}>
             <Toggle checked={f.acceso_relevantes} onChange={v => set('acceso_relevantes', v)} label="Acceso al Módulo de Relevantes" />
             {f.acceso_relevantes && (
               <div className="grid grid-cols-2 gap-3 pt-1">
@@ -448,11 +465,37 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
               </div>
             )}
           </section>
+
+          {/* ── Acceso: Criterios ────────────────────────────────────── */}
+          <section className="rounded-xl p-4 space-y-3" style={{ background: '#F7F5F3', border: '1.5px solid #E3DFDA' }}>
+            <Toggle checked={f.acceso_criterios} onChange={v => set('acceso_criterios', v)} label="Acceso al Módulo de Criterios" />
+            {f.acceso_criterios && (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className={f.rol_criterios === 'admin' ? 'col-span-2' : ''}>
+                  <label className="ine-label">Rol en Criterios</label>
+                  <select className="ine-input" value={f.rol_criterios}
+                    onChange={e => { const r = e.target.value; set('rol_criterios', r); if (r === 'admin') set('materia_criterios', '') }}>
+                    {ROLES_CRITERIOS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                  </select>
+                </div>
+                {f.rol_criterios !== 'admin' && (
+                  <div className="col-span-2">
+                    <label className="ine-label">Materia asignada</label>
+                    <select className="ine-input" value={f.materia_criterios}
+                      onChange={e => set('materia_criterios', e.target.value)}>
+                      <option value="">— Seleccionar —</option>
+                      {CRIT_MATERIAS.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
         </div>
 
         {/* Footer */}
         <div className="flex gap-3 justify-end px-6 py-4 flex-shrink-0"
-          style={{ borderTop: '1px solid #E2D9EE', background: '#F8F5FB' }}>
+          style={{ borderTop: '1px solid #E3DFDA', background: '#F7F5F3' }}>
           <button className="btn-outline" onClick={onClose} disabled={saving}>Cancelar</button>
           <button className="btn-ine" onClick={handleSubmit} disabled={saving}>
             {saving
@@ -518,7 +561,7 @@ function SubdireccionesPanel({ subdirecciones = [], onRefresh }) {
   return (
     <div className="ine-card overflow-hidden">
       {/* Panel header */}
-      <div className="px-5 py-3 flex items-center gap-2" style={{ background: '#F8F5FB', borderBottom: '1px solid #EDE8F4' }}>
+      <div className="px-5 py-3 flex items-center gap-2" style={{ background: '#F7F5F3', borderBottom: '1px solid #EDEAE6' }}>
         <svg className="w-4 h-4 text-ine-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -572,11 +615,11 @@ function SubdireccionesPanel({ subdirecciones = [], onRefresh }) {
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
                   <span className="text-xs font-bold text-ine-muted uppercase tracking-wide">{label}</span>
                 </div>
-                <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #EDE8F4' }}>
+                <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #EDEAE6' }}>
                   {subs.map((s, i) => (
                     <div key={s.id}
                       className="flex items-center gap-2 px-4 py-2"
-                      style={{ borderBottom: i < subs.length - 1 ? '1px solid #EDE8F4' : undefined }}>
+                      style={{ borderBottom: i < subs.length - 1 ? '1px solid #EDEAE6' : undefined }}>
                       {editingId === s.id ? (
                         <>
                           <input
@@ -590,7 +633,7 @@ function SubdireccionesPanel({ subdirecciones = [], onRefresh }) {
                             onClick={() => handleEditSave(s.id)}
                             disabled={savingId === s.id}
                             className="p-1 rounded text-white transition-colors flex-shrink-0"
-                            style={{ background: '#674092' }}
+                            style={{ background: '#454247' }}
                             title="Guardar">
                             {savingId === s.id
                               ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -704,7 +747,7 @@ export default function UserManagement({ onBack, me }) {
   return (
     <div className="min-h-screen bg-ine-bg flex flex-col">
       <header className="bg-white flex items-center px-6 h-14 flex-shrink-0"
-        style={{ borderBottom: '1px solid #E2D9EE', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+        style={{ borderBottom: '1px solid #E3DFDA', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
         <button onClick={onBack} className="btn-ghost mr-4">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -731,7 +774,7 @@ export default function UserManagement({ onBack, me }) {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="w-10 h-10 border-4 rounded-full animate-spin mb-3"
-                style={{ borderColor: '#E2D9EE', borderTopColor: '#674092' }} />
+                style={{ borderColor: '#E3DFDA', borderTopColor: '#454247' }} />
               <p className="text-ine-muted text-sm">Cargando usuarios…</p>
             </div>
           ) : (
@@ -754,13 +797,14 @@ export default function UserManagement({ onBack, me }) {
                     <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr style={{ background: '#F8F5FB', borderBottom: '1px solid #EDE8F4' }}>
+                        <tr style={{ background: '#F7F5F3', borderBottom: '1px solid #EDEAE6' }}>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Nombre</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Correo</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden md:table-cell">Dirección de Área</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Notificaciones</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">SiCoDEAJ</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Relevantes</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide hidden sm:table-cell">Criterios</th>
                           <th className="px-4 py-2.5 text-left text-xs font-bold text-ine-muted uppercase tracking-wide">Estado</th>
                           <th className="px-4 py-2.5 text-right text-xs font-bold text-ine-muted uppercase tracking-wide">Acciones</th>
                         </tr>
@@ -780,8 +824,8 @@ export default function UserManagement({ onBack, me }) {
                             <tr key={u.id}
                               onClick={() => { if (window.matchMedia('(max-width: 639px)').matches) setModal(u) }}
                               className="cursor-pointer sm:cursor-default"
-                              style={{ borderBottom: i < items.length - 1 ? '1px solid #EDE8F4' : undefined }}
-                              onMouseEnter={e => e.currentTarget.style.background = '#F8F5FB'}
+                              style={{ borderBottom: i < items.length - 1 ? '1px solid #EDEAE6' : undefined }}
+                              onMouseEnter={e => e.currentTarget.style.background = '#F7F5F3'}
                               onMouseLeave={e => e.currentTarget.style.background = ''}>
 
                               {/* Nombre */}
@@ -796,7 +840,7 @@ export default function UserManagement({ onBack, me }) {
                                       <span className="text-sm font-semibold text-ine-text">{u.nombre}</span>
                                       {u.rol === 'admin' && (
                                         <span className="text-xs px-1.5 py-0.5 rounded font-bold"
-                                          style={{ background: '#EDE8F4', color: '#674092' }}>ADMIN</span>
+                                          style={{ background: '#EDEAE6', color: '#454247' }}>ADMIN</span>
                                       )}
                                     </div>
                                     {needsPuesto(u.rol_tareas) && u.puesto && (
@@ -830,21 +874,28 @@ export default function UserManagement({ onBack, me }) {
                               {/* Diligencias */}
                               <td className="px-4 py-3 hidden sm:table-cell">
                                 {u.acceso_diligencias
-                                  ? <AppBadge label={u.rol_diligencias} color="#0369A1" />
+                                  ? <AppBadge label={u.rol_diligencias} color="#6B6E73" />
                                   : <span className="text-xs text-ine-dim">—</span>}
                               </td>
 
                               {/* Oficios */}
                               <td className="px-4 py-3 hidden sm:table-cell">
                                 {u.acceso_oficios
-                                  ? <AppBadge label={u.rol_oficios} color="#047857" />
+                                  ? <AppBadge label={u.rol_oficios} color="#8A6A48" />
                                   : <span className="text-xs text-ine-dim">—</span>}
                               </td>
 
                               {/* Relevantes */}
                               <td className="px-4 py-3 hidden sm:table-cell">
                                 {u.acceso_relevantes
-                                  ? <AppBadge label={u.rol_relevantes === 'admin' ? 'admin' : 'capturista'} color="#49276F" />
+                                  ? <AppBadge label={u.rol_relevantes === 'admin' ? 'admin' : 'capturista'} color="#6B6E73" />
+                                  : <span className="text-xs text-ine-dim">—</span>}
+                              </td>
+
+                              {/* Criterios */}
+                              <td className="px-4 py-3 hidden sm:table-cell">
+                                {u.acceso_criterios
+                                  ? <AppBadge label={u.rol_criterios === 'admin' ? 'admin' : u.rol_criterios === 'aprobador' ? 'aprobador' : 'capturista'} color="#000000" />
                                   : <span className="text-xs text-ine-dim">—</span>}
                               </td>
 
@@ -938,7 +989,7 @@ export default function UserManagement({ onBack, me }) {
           {isAdmin && (
             <div>
               <div className="flex items-center gap-2.5 mb-3">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#674092' }} />
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#454247' }} />
                 <h3 className="text-sm font-bold text-ine-text">Catálogo de Subdirecciones</h3>
                 <div className="flex-1 h-px bg-ine-border" />
               </div>
