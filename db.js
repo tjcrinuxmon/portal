@@ -51,6 +51,12 @@ try { db.exec("ALTER TABLE usuarios ADD COLUMN subdireccion_relevantes TEXT DEFA
 // Los administradores del portal tienen acceso a todos los módulos (convención del seed).
 try { db.exec("UPDATE usuarios SET acceso_relevantes = 1, rol_relevantes = 'admin' WHERE rol = 'admin'") } catch (_) {}
 
+// ── Módulo Criterios (Criterios de Resolución) ──────────────────────────────
+try { db.exec("ALTER TABLE usuarios ADD COLUMN acceso_criterios INTEGER DEFAULT 0") } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN rol_criterios TEXT DEFAULT 'usuario'") } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN materia_criterios TEXT DEFAULT ''") } catch (_) {}
+try { db.exec("UPDATE usuarios SET acceso_criterios = 1, rol_criterios = 'admin' WHERE rol = 'admin'") } catch (_) {}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS subdirecciones (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,

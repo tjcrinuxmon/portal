@@ -200,6 +200,48 @@ if (relevantesDb) {
   console.log(`✅ ${all.length} usuarios de relevantes sincronizados al arranque`)
 }
 
+/* ── Criterios DB sync ──────────────────────────────────────────────────────
+   Mirror portal user changes into criterios/criterios.db immediately on save.
+ ─────────────────────────────────────────────────────────────────────────── */
+const criteriosDbPath = join(__dirname, '..', 'criterios', 'criterios.db')
+let criteriosDb = null
+try {
+  if (existsSync(criteriosDbPath)) {
+    criteriosDb = new Database(criteriosDbPath)
+    console.log('✅ criterios.db conectado para sincronización')
+  }
+} catch (e) {
+  console.warn('⚠️  No se pudo abrir criterios.db:', e.message)
+}
+
+function syncToCriterios(u) {
+  if (!criteriosDb) return
+  try {
+    const activo = u.acceso_criterios ? 1 : 0
+    const rol    = ['admin', 'aprobador'].includes(u.rol_criterios) ? u.rol_criterios : 'usuario'
+    const materia = u.materia_criterios || null
+    const exists = criteriosDb.prepare('SELECT id FROM usuarios WHERE email = ?').get(u.email)
+    if (exists) {
+      criteriosDb.prepare(
+        'UPDATE usuarios SET nombre=?, rol=?, materia=?, activo=? WHERE email=?'
+      ).run(u.nombre, rol, materia, activo, u.email)
+    } else if (u.acceso_criterios) {
+      criteriosDb.prepare(
+        'INSERT INTO usuarios (nombre, email, password_hash, rol, activo, materia) VALUES (?,?,?,?,?,?)'
+      ).run(u.nombre, u.email, u.password_hash || 'sso', rol, 1, materia)
+    }
+  } catch (e) {
+    console.error('Error sincronizando a criterios:', e.message)
+  }
+}
+
+// On startup: sync every portal user that has criterios access
+if (criteriosDb) {
+  const all = db.prepare('SELECT * FROM usuarios WHERE acceso_criterios = 1').all()
+  all.forEach(u => syncToCriterios(u))
+  console.log(`✅ ${all.length} usuarios de criterios sincronizados al arranque`)
+}
+
 const app  = express()
 const PORT = process.env.PORT || 3004
 
@@ -208,9 +250,10 @@ const TAREAS_SECRET     = process.env.TAREAS_SECRET
 const OFICIOS_SECRET    = process.env.OFICIOS_SECRET
 const DILIG_SECRET      = process.env.DILIG_SECRET
 const RELEVANTES_SECRET = process.env.RELEVANTES_SECRET
+const CRITERIOS_SECRET  = process.env.CRITERIOS_SECRET
 
-if (!PORTAL_SECRET || !TAREAS_SECRET || !OFICIOS_SECRET || !DILIG_SECRET || !RELEVANTES_SECRET) {
-  console.error('FATAL: Faltan variables de entorno de seguridad (PORTAL_SECRET, TAREAS_SECRET, OFICIOS_SECRET, DILIG_SECRET, RELEVANTES_SECRET)')
+if (!PORTAL_SECRET || !TAREAS_SECRET || !OFICIOS_SECRET || !DILIG_SECRET || !RELEVANTES_SECRET || !CRITERIOS_SECRET) {
+  console.error('FATAL: Faltan variables de entorno de seguridad (PORTAL_SECRET, TAREAS_SECRET, OFICIOS_SECRET, DILIG_SECRET, RELEVANTES_SECRET, CRITERIOS_SECRET)')
   process.exit(1)
 }
 
@@ -226,6 +269,7 @@ const APP_URLS = {
   oficios:     process.env.URL_OFICIOS     || '/oficios',
   diligencias: process.env.URL_DILIGENCIAS || '/diligencias',
   relevantes:  process.env.URL_RELEVANTES  || '/relevantes/',
+  criterios:   process.env.URL_CRITERIOS   || '/criterios/',
 }
 
 app.use(helmet({ contentSecurityPolicy: false }))
@@ -286,6 +330,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
       acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
       acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
       acceso_relevantes: !!u.acceso_relevantes, rol_relevantes: u.rol_relevantes, direccion_relevantes: u.direccion_relevantes, subdireccion_relevantes: u.subdireccion_relevantes,
+      acceso_criterios: !!u.acceso_criterios, rol_criterios: u.rol_criterios, materia_criterios: u.materia_criterios,
     },
     PORTAL_SECRET, { expiresIn: '8h' }
   )
@@ -294,6 +339,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
     acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
     acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
     acceso_relevantes: !!u.acceso_relevantes, rol_relevantes: u.rol_relevantes, direccion_relevantes: u.direccion_relevantes, subdireccion_relevantes: u.subdireccion_relevantes,
+    acceso_criterios: !!u.acceso_criterios, rol_criterios: u.rol_criterios, materia_criterios: u.materia_criterios,
   }})
 })
 
@@ -314,6 +360,7 @@ app.get('/api/auth/me', auth, (req, res) => {
     acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
     acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
     acceso_relevantes: !!u.acceso_relevantes, rol_relevantes: u.rol_relevantes, direccion_relevantes: u.direccion_relevantes, subdireccion_relevantes: u.subdireccion_relevantes,
+    acceso_criterios: !!u.acceso_criterios, rol_criterios: u.rol_criterios, materia_criterios: u.materia_criterios,
   })
 })
 
@@ -348,6 +395,11 @@ app.get('/api/sso/:app', auth, (req, res) => {
       check: () => u.acceso_relevantes,
       payload: () => ({ email: u.email, nombre: u.nombre, rol: u.rol_relevantes, direccion: u.direccion_relevantes, subdireccion: u.subdireccion_relevantes }),
     },
+    criterios: {
+      secret: CRITERIOS_SECRET,
+      check: () => u.acceso_criterios,
+      payload: () => ({ email: u.email, nombre: u.nombre, rol: u.rol_criterios, materia: u.materia_criterios }),
+    },
   }
 
   const cfg = appConfig[appName]
@@ -361,9 +413,9 @@ app.get('/api/sso/:app', auth, (req, res) => {
 /* ── Usuarios (admin) ───────────────────────────────────────────────────── */
 app.get('/api/usuarios', auth, adminOnly, (_req, res) => {
   const rows = db.prepare(
-    'SELECT id,nombre,email,rol,puesto,acceso_tareas,rol_tareas,direccion_tareas,acceso_oficios,rol_oficios,area_oficios,acceso_diligencias,rol_diligencias,area_diligencias,acceso_relevantes,rol_relevantes,direccion_relevantes,subdireccion_relevantes,activo,created_at FROM usuarios ORDER BY nombre'
+    'SELECT id,nombre,email,rol,puesto,acceso_tareas,rol_tareas,direccion_tareas,acceso_oficios,rol_oficios,area_oficios,acceso_diligencias,rol_diligencias,area_diligencias,acceso_relevantes,rol_relevantes,direccion_relevantes,subdireccion_relevantes,acceso_criterios,rol_criterios,materia_criterios,activo,created_at FROM usuarios ORDER BY nombre'
   ).all()
-  res.json(rows.map(u => ({ ...u, acceso_tareas: !!u.acceso_tareas, acceso_oficios: !!u.acceso_oficios, acceso_diligencias: !!u.acceso_diligencias, acceso_relevantes: !!u.acceso_relevantes, activo: !!u.activo })))
+  res.json(rows.map(u => ({ ...u, acceso_tareas: !!u.acceso_tareas, acceso_oficios: !!u.acceso_oficios, acceso_diligencias: !!u.acceso_diligencias, acceso_relevantes: !!u.acceso_relevantes, acceso_criterios: !!u.acceso_criterios, activo: !!u.activo })))
 })
 
 app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
@@ -371,7 +423,8 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
     acceso_tareas = false, rol_tareas = '', direccion_tareas = '',
     acceso_oficios = false, rol_oficios = 'usuario', area_oficios = '',
     acceso_diligencias = false, rol_diligencias = 'usuario', area_diligencias = '',
-    acceso_relevantes = false, rol_relevantes = 'usuario', direccion_relevantes = '', subdireccion_relevantes = '' } = req.body
+    acceso_relevantes = false, rol_relevantes = 'usuario', direccion_relevantes = '', subdireccion_relevantes = '',
+    acceso_criterios = false, rol_criterios = 'usuario', materia_criterios = '' } = req.body
   if (!nombre || !email) return res.status(400).json({ error: 'Faltan campos obligatorios' })
   try {
     const tmpPassword = crypto.randomBytes(12).toString('base64url')
@@ -384,19 +437,22 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
         acceso_oficios,rol_oficios,area_oficios,
         acceso_diligencias,rol_diligencias,area_diligencias,
         acceso_relevantes,rol_relevantes,direccion_relevantes,subdireccion_relevantes,
+        acceso_criterios,rol_criterios,materia_criterios,
         reset_token,reset_token_expires,primer_acceso)
-      VALUES (?,?,?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?,?, ?,?,?)
+      VALUES (?,?,?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?,?, ?,?,?, ?,?,?)
     `).run(nombre, email.toLowerCase(), hash, rol, puesto,
            acceso_tareas ? 1 : 0, rol_tareas, direccion_tareas,
            acceso_oficios ? 1 : 0, rol_oficios, area_oficios,
            acceso_diligencias ? 1 : 0, rol_diligencias, area_diligencias,
            acceso_relevantes ? 1 : 0, rol_relevantes, direccion_relevantes, subdireccion_relevantes,
+           acceso_criterios ? 1 : 0, rol_criterios, materia_criterios,
            resetToken, expires, 1)
     const created = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(r.lastInsertRowid)
     syncToTareas(created)
     syncToDiligencias(created)
     syncToOficios(created)
     syncToRelevantes(created)
+    syncToCriterios(created)
     const resetUrl = `${BASE_URL}?token=${resetToken}`
     try {
       await sendWelcomeEmail({ nombre, email: email.toLowerCase() })
@@ -416,7 +472,8 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
     acceso_tareas, rol_tareas, direccion_tareas,
     acceso_oficios, rol_oficios, area_oficios,
     acceso_diligencias, rol_diligencias, area_diligencias,
-    acceso_relevantes, rol_relevantes, direccion_relevantes, subdireccion_relevantes, activo } = req.body
+    acceso_relevantes, rol_relevantes, direccion_relevantes, subdireccion_relevantes,
+    acceso_criterios, rol_criterios, materia_criterios, activo } = req.body
   const u = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.params.id)
   if (!u) return res.status(404).json({ error: 'Usuario no encontrado' })
   const hash = password ? bcrypt.hashSync(password, 10) : u.password_hash
@@ -425,7 +482,8 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
       acceso_tareas=?,rol_tareas=?,direccion_tareas=?,
       acceso_oficios=?,rol_oficios=?,area_oficios=?,
       acceso_diligencias=?,rol_diligencias=?,area_diligencias=?,
-      acceso_relevantes=?,rol_relevantes=?,direccion_relevantes=?,subdireccion_relevantes=?,activo=?
+      acceso_relevantes=?,rol_relevantes=?,direccion_relevantes=?,subdireccion_relevantes=?,
+      acceso_criterios=?,rol_criterios=?,materia_criterios=?,activo=?
     WHERE id=?
   `).run(nombre ?? u.nombre, (email ?? u.email).toLowerCase(), hash, rol ?? u.rol, puesto ?? u.puesto ?? '',
          acceso_tareas != null ? (acceso_tareas ? 1 : 0) : u.acceso_tareas,
@@ -436,6 +494,8 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
          rol_diligencias ?? u.rol_diligencias, area_diligencias ?? u.area_diligencias,
          acceso_relevantes != null ? (acceso_relevantes ? 1 : 0) : u.acceso_relevantes,
          rol_relevantes ?? u.rol_relevantes, direccion_relevantes ?? u.direccion_relevantes, subdireccion_relevantes ?? u.subdireccion_relevantes,
+         acceso_criterios != null ? (acceso_criterios ? 1 : 0) : u.acceso_criterios,
+         rol_criterios ?? u.rol_criterios, materia_criterios ?? u.materia_criterios,
          activo != null ? (activo ? 1 : 0) : u.activo,
          req.params.id)
   const updated = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.params.id)
@@ -443,6 +503,7 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   syncToDiligencias(updated)
   syncToOficios(updated)
   syncToRelevantes(updated)
+  syncToCriterios(updated)
   res.json({ ok: true })
 })
 
