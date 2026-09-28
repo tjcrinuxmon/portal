@@ -47,6 +47,7 @@ const AREAS_OFICIOS = [
   'Coordinación de Análisis de Información y Control Documental',
   'Líder de Enlace Interinstitucional',
   'Secretaría Particular',
+  'Comisión de Verificación de Integridad en Candidaturas',
 ]
 
 const AREAS_DILIGENCIAS = [
