@@ -4,8 +4,8 @@ import { getSsoToken } from '../api.js'
 const APPS = [
   {
     key: 'tareas2',
-    title: 'Seguimiento',
-    desc: 'Seguimiento de los rubros de cada dirección: Asuntos Laborales y Contratos y Convenios.',
+    title: 'Módulo de Seguimiento',
+    desc: 'Seguimiento de actividades de las Direcciones de Área.',
     color: '#454247',
     bg: '#45424714',
     border: '#45424730',
