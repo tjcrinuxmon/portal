@@ -22,20 +22,22 @@ function log(msg) {
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-/* ── Tareas DB sync ─────────────────────────────────────────────────────────
+/* ── Seguimiento DB sync (antes Tareas) ──────────────────────────────────────
    The portal is the source of truth. Any create/update here is mirrored into
-   tareas.db so users appear in task assignment dropdowns without needing to
-   log in via SSO first.
+   seguimiento.db (módulo Seguimiento, que reemplazó a Tareas) so users appear
+   in its "Responsable" dropdowns without needing to log in via SSO first.
+   Access/role/direction keep their historical names: acceso_tareas, rol_tareas,
+   direccion_tareas.
  ─────────────────────────────────────────────────────────────────────────── */
-const tareasDbPath = join(__dirname, '..', 'tareas', 'tareas.db')
+const tareasDbPath = join(__dirname, '..', 'seguimiento', 'seguimiento.db')
 let tareasDb = null
 try {
   if (existsSync(tareasDbPath)) {
     tareasDb = new Database(tareasDbPath)
-    console.log('✅ tareas.db conectado para sincronización')
+    console.log('✅ seguimiento.db conectado para sincronización')
   }
 } catch (e) {
-  console.warn('⚠️  No se pudo abrir tareas.db:', e.message)
+  console.warn('⚠️  No se pudo abrir seguimiento.db:', e.message)
 }
 
 function syncToTareas(u) {
@@ -52,11 +54,11 @@ function syncToTareas(u) {
     } else {
       tareasDb.prepare(
         'INSERT INTO users (username, email, name, password_hash, role, direccion, puesto, portal_id) VALUES (?,?,?,?,?,?,?,?)'
-      ).run(u.email, u.email, u.nombre, u.password_hash || 'sso_user',
+      ).run(u.email, u.email, u.nombre, 'sso_user',  // acceso solo por SSO: no se copian contraseñas
             u.rol_tareas || 'director', u.direccion_tareas || null, u.puesto || null, u.id)
     }
   } catch (e) {
-    console.error('Error sincronizando a tareas:', e.message)
+    console.error('Error sincronizando a seguimiento:', e.message)
   }
 }
 
@@ -69,7 +71,7 @@ if (tareasDb) {
 if (tareasDb) {
   const all = db.prepare('SELECT * FROM usuarios WHERE acceso_tareas = 1').all()
   all.forEach(u => syncToTareas(u))
-  console.log(`✅ ${all.length} usuarios de tareas sincronizados al arranque`)
+  console.log(`✅ ${all.length} usuarios de seguimiento sincronizados al arranque`)
 }
 
 /* ── Diligencias DB sync ────────────────────────────────────────────────────
@@ -265,7 +267,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 // la ruta. Si algún módulo viviera en otro dominio, se puede sobreescribir con URL_*.
 const APP_URLS = {
   tareas:      process.env.URL_TAREAS      || '/tareas/',
-  tareas2:     process.env.URL_TAREAS2     || '/tareas2/',
+  tareas2:     process.env.URL_TAREAS2     || '/seguimiento/',  // módulo Seguimiento (antes Tareas)
   oficios:     process.env.URL_OFICIOS     || '/oficios',
   diligencias: process.env.URL_DILIGENCIAS || '/diligencias',
   relevantes:  process.env.URL_RELEVANTES  || '/relevantes/',

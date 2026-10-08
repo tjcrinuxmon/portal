@@ -123,7 +123,7 @@ const GROUPS = [
   { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#454247' },
   { key: 'subdirector', label: 'Subdirector/a',                    color: '#2563EB' },
   { key: 'secretaria',  label: 'Secretaría Particular',            color: '#EC4899' },
-  { key: null,          label: 'Sin acceso a Tareas',              color: '#6B7280' },
+  { key: null,          label: 'Sin acceso a Seguimiento',         color: '#6B7280' },
 ]
 
 const needsDireccion = (rol) => rol === 'director' || rol === 'subdirector'
@@ -335,13 +335,13 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
             )}
           </div>
 
-          {/* ── Acceso: Tareas ───────────────────────────────────────── */}
+          {/* ── Acceso: Seguimiento (antes Tareas; campos *_tareas) ───────────────────────────────────────── */}
           <section className="rounded-xl p-4 space-y-3" style={{ background: '#F7F5F3', border: '1.5px solid #E3DFDA' }}>
-            <Toggle checked={f.acceso_tareas} onChange={v => set('acceso_tareas', v)} label="Acceso al Sistema de Tareas" />
+            <Toggle checked={f.acceso_tareas} onChange={v => set('acceso_tareas', v)} label="Acceso a Seguimiento" />
             {f.acceso_tareas && (
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className={needsDireccion(f.rol_tareas) ? '' : 'col-span-2'}>
-                  <label className="ine-label">Rol en Tareas</label>
+                  <label className="ine-label">Rol en Seguimiento</label>
                   <select className="ine-input" value={f.rol_tareas} onChange={e => set('rol_tareas', e.target.value)}>
                     {ROLES_TAREAS.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
                   </select>

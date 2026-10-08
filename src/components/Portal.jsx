@@ -4,8 +4,8 @@ import { getSsoToken } from '../api.js'
 const APPS = [
   {
     key: 'tareas2',
-    title: 'Módulo de Tareas',
-    desc: 'Seguimiento de tareas y actividades de la Dirección Ejecutiva de Asuntos Jurídicos.',
+    title: 'Seguimiento',
+    desc: 'Seguimiento de los rubros de cada dirección: Asuntos Laborales y Contratos y Convenios.',
     color: '#454247',
     bg: '#45424714',
     border: '#45424730',
