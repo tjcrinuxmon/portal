@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="SiCoDEAJ">
+  <rect width="512" height="512" fill="#454247"/>
+  <g transform="translate(96 96) scale(3.3333) translate(-6 -2)">
+    <path d="M22 8 H56 L76 28 V88 H22 Z" fill="#ffffff"/>
+    <path d="M56 8 V28 H76 Z" fill="#C5A989"/>
+    <path d="M32 42 H56 M32 52 H48" stroke="#454247" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <circle cx="66" cy="72" r="20" fill="#C5A989" stroke="#454247" stroke-width="4"/>
+    <path d="M57 72 L64 79 L76 65" fill="none" stroke="#454247" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
