@@ -370,7 +370,10 @@ app.get('/api/auth/me', auth, (req, res) => {
 /* ── GET /api/sso/:app ─────────────────────────────────────────────────── */
 app.get('/api/sso/:app', auth, (req, res) => {
   const { app: appName } = req.params
-  const u = req.user
+  // Datos actuales de la base, no los de la sesión (que duran 8 h): así un cambio de rol,
+  // acceso o subdirección aplica en el siguiente ingreso al módulo, y una baja también.
+  const u = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.user.id)
+  if (!u || !u.activo) return res.status(403).json({ error: 'Usuario inactivo' })
 
   const appConfig = {
     tareas: {
