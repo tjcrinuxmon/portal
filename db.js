@@ -53,7 +53,7 @@ try { db.exec("UPDATE usuarios SET acceso_relevantes = 1, rol_relevantes = 'admi
 
 // ── Módulo Criterios (Criterios de Resolución) ──────────────────────────────
 try { db.exec("ALTER TABLE usuarios ADD COLUMN acceso_criterios INTEGER DEFAULT 0") } catch (_) {}
-// Seguimiento: subdirección de un Subdirector/a, como clave del catálogo de Seguimiento
+// Seguimiento: subdirección de un Subdirector/a o Usuario, como clave del catálogo de Seguimiento
 // (litigio, recursos, convenios, contratos). Solo ve lo de su subdirección.
 try { db.exec("ALTER TABLE usuarios ADD COLUMN subdireccion_tareas TEXT DEFAULT ''") } catch (_) {}
 {
@@ -66,7 +66,7 @@ try { db.exec("ALTER TABLE usuarios ADD COLUMN subdireccion_tareas TEXT DEFAULT 
     return ''
   }
   const upd = db.prepare('UPDATE usuarios SET subdireccion_tareas = ? WHERE id = ?')
-  for (const u of db.prepare("SELECT id, direccion_tareas, puesto FROM usuarios WHERE rol_tareas = 'subdirector' AND COALESCE(subdireccion_tareas, '') = ''").all()) {
+  for (const u of db.prepare("SELECT id, direccion_tareas, puesto FROM usuarios WHERE rol_tareas IN ('subdirector', 'usuario') AND COALESCE(subdireccion_tareas, '') = ''").all()) {
     const k = clave(u.direccion_tareas, u.puesto)
     if (k) upd.run(k, u.id)
   }

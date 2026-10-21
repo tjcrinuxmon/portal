@@ -20,6 +20,7 @@ const ROLES_TAREAS = [
   { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#454247' },
   { key: 'subdirector', label: 'Subdirector/a',                    color: '#2563EB' },
   { key: 'secretaria',  label: 'Secretaría Particular',            color: '#EC4899' },
+  { key: 'usuario',     label: 'Usuario (subdirección)',           color: '#0E7490' },
 ]
 
 // Subdirecciones de Seguimiento por dirección. Las claves DEBEN coincidir con
@@ -137,10 +138,13 @@ const GROUPS = [
   { key: 'director',    label: 'Director/a de Área-Coordinador/a', color: '#454247' },
   { key: 'subdirector', label: 'Subdirector/a',                    color: '#2563EB' },
   { key: 'secretaria',  label: 'Secretaría Particular',            color: '#EC4899' },
+  { key: 'usuario',     label: 'Usuario (subdirección)',           color: '#0E7490' },
   { key: null,          label: 'Sin acceso a Seguimiento',         color: '#6B7280' },
 ]
 
-const needsDireccion = (rol) => rol === 'director' || rol === 'subdirector'
+// Seguimiento: Director/a, Subdirector/a y Usuario pertenecen a una dirección; Subdirector/a y
+// Usuario además a una subdirección (y en Seguimiento solo ven la suya).
+const needsDireccion = (rol) => rol === 'director' || rol === 'subdirector' || rol === 'usuario'
 
 const AREA_COLORS = {
   'Dirección de Instrucción Recursal':                           '#3B82F6',
@@ -155,7 +159,7 @@ const AREA_COLORS = {
   'Líder de Enlace Interinstitucional':                         '#F97316',
   'Dirección Ejecutiva de Asuntos Jurídicos':                   '#454247',
 }
-const needsPuesto    = (rol) => rol === 'subdirector'
+const needsPuesto    = (rol) => rol === 'subdirector' || rol === 'usuario'
 const dirCfg         = (key) => DIRECCIONES.find(d => d.key === key)
 
 // ── Toggle ───────────────────────────────────────────────────────────────────
@@ -248,7 +252,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
       if (!f.acceso_tareas || !needsPuesto(f.rol_tareas) || !segSubs) data.subdireccion_tareas = ''
       if (data.subdireccion_tareas) data.puesto = segSubs.find(s => s.key === data.subdireccion_tareas)?.label || data.puesto
       if (f.acceso_tareas && needsPuesto(f.rol_tareas) && segSubs && !data.subdireccion_tareas) {
-        setError('Elige la subdirección: un Subdirector/a solo ve en Seguimiento lo de su subdirección'); setSaving(false); return
+        setError('Elige la subdirección: en Seguimiento solo verá lo de su subdirección'); setSaving(false); return
       }
       if (isEdit) await updateUsuario(user.id, data)
       else        await createUsuario(data)
