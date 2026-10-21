@@ -53,6 +53,24 @@ try { db.exec("UPDATE usuarios SET acceso_relevantes = 1, rol_relevantes = 'admi
 
 // ── Módulo Criterios (Criterios de Resolución) ──────────────────────────────
 try { db.exec("ALTER TABLE usuarios ADD COLUMN acceso_criterios INTEGER DEFAULT 0") } catch (_) {}
+// Seguimiento: subdirección de un Subdirector/a, como clave del catálogo de Seguimiento
+// (litigio, recursos, convenios, contratos). Solo ve lo de su subdirección.
+try { db.exec("ALTER TABLE usuarios ADD COLUMN subdireccion_tareas TEXT DEFAULT ''") } catch (_) {}
+{
+  // Los que ya tenían la subdirección escrita a mano en "puesto" se pasan a la clave
+  const sinAcentos = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const clave = (dir, puesto) => {
+    const p = sinAcentos(puesto)
+    if (dir === 'asuntos_laborales') return p.includes('litigio') ? 'litigio' : p.includes('recurso') ? 'recursos' : ''
+    if (dir === 'contratos_convenios') return p.includes('convenio') ? 'convenios' : p.includes('contrato') ? 'contratos' : ''
+    return ''
+  }
+  const upd = db.prepare('UPDATE usuarios SET subdireccion_tareas = ? WHERE id = ?')
+  for (const u of db.prepare("SELECT id, direccion_tareas, puesto FROM usuarios WHERE rol_tareas = 'subdirector' AND COALESCE(subdireccion_tareas, '') = ''").all()) {
+    const k = clave(u.direccion_tareas, u.puesto)
+    if (k) upd.run(k, u.id)
+  }
+}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN rol_criterios TEXT DEFAULT 'usuario'") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN materia_criterios TEXT DEFAULT ''") } catch (_) {}
 try { db.exec("UPDATE usuarios SET acceso_criterios = 1, rol_criterios = 'admin' WHERE rol = 'admin'") } catch (_) {}

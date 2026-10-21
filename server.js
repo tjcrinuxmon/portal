@@ -48,14 +48,14 @@ function syncToTareas(u) {
               ?? tareasDb.prepare('SELECT id FROM users WHERE email = ?').get(u.email)
     if (exists) {
       tareasDb.prepare(
-        'UPDATE users SET name=?, email=?, username=?, role=?, direccion=?, puesto=?, portal_id=? WHERE id=?'
+        'UPDATE users SET name=?, email=?, username=?, role=?, direccion=?, puesto=?, subdireccion=?, portal_id=? WHERE id=?'
       ).run(u.nombre, u.email, u.email, u.rol_tareas || 'director',
-            u.direccion_tareas || null, u.puesto || null, u.id, exists.id)
+            u.direccion_tareas || null, u.puesto || null, u.subdireccion_tareas || null, u.id, exists.id)
     } else {
       tareasDb.prepare(
-        'INSERT INTO users (username, email, name, password_hash, role, direccion, puesto, portal_id) VALUES (?,?,?,?,?,?,?,?)'
+        'INSERT INTO users (username, email, name, password_hash, role, direccion, puesto, subdireccion, portal_id) VALUES (?,?,?,?,?,?,?,?,?)'
       ).run(u.email, u.email, u.nombre, 'sso_user',  // acceso solo por SSO: no se copian contraseñas
-            u.rol_tareas || 'director', u.direccion_tareas || null, u.puesto || null, u.id)
+            u.rol_tareas || 'director', u.direccion_tareas || null, u.puesto || null, u.subdireccion_tareas || null, u.id)
     }
   } catch (e) {
     console.error('Error sincronizando a seguimiento:', e.message)
@@ -65,6 +65,7 @@ function syncToTareas(u) {
 // Add portal_id column to tareas.users if it doesn't exist yet
 if (tareasDb) {
   try { tareasDb.exec('ALTER TABLE users ADD COLUMN portal_id INTEGER') } catch (_) {}
+  try { tareasDb.exec('ALTER TABLE users ADD COLUMN subdireccion TEXT') } catch (_) {}
 }
 
 // On startup: sync every portal user that has tareas access, fixing any gap
@@ -328,7 +329,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
   db.prepare('UPDATE usuarios SET primer_acceso = 0 WHERE id = ?').run(u.id)
   const token = jwt.sign(
     { id: u.id, email: u.email, nombre: u.nombre, rol: u.rol, puesto: u.puesto || '',
-      acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas,
+      acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas, subdireccion_tareas: u.subdireccion_tareas || '',
       acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
       acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
       acceso_relevantes: !!u.acceso_relevantes, rol_relevantes: u.rol_relevantes, direccion_relevantes: u.direccion_relevantes, subdireccion_relevantes: u.subdireccion_relevantes,
@@ -337,7 +338,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
     PORTAL_SECRET, { expiresIn: '8h' }
   )
   res.json({ token, user: { id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, puesto: u.puesto || '',
-    acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas,
+    acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas, subdireccion_tareas: u.subdireccion_tareas || '',
     acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
     acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
     acceso_relevantes: !!u.acceso_relevantes, rol_relevantes: u.rol_relevantes, direccion_relevantes: u.direccion_relevantes, subdireccion_relevantes: u.subdireccion_relevantes,
@@ -358,7 +359,7 @@ app.get('/api/auth/me', auth, (req, res) => {
   const u = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.user.id)
   if (!u) return res.status(404).json({ error: 'Usuario no encontrado' })
   res.json({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, puesto: u.puesto || '',
-    acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas,
+    acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas, subdireccion_tareas: u.subdireccion_tareas || '',
     acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
     acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
     acceso_relevantes: !!u.acceso_relevantes, rol_relevantes: u.rol_relevantes, direccion_relevantes: u.direccion_relevantes, subdireccion_relevantes: u.subdireccion_relevantes,
@@ -375,12 +376,12 @@ app.get('/api/sso/:app', auth, (req, res) => {
     tareas: {
       secret: TAREAS_SECRET,
       check: () => u.acceso_tareas,
-      payload: () => ({ email: u.email, name: u.nombre, role: u.rol_tareas, direccion: u.direccion_tareas, puesto: u.puesto || '' }),
+      payload: () => ({ email: u.email, name: u.nombre, role: u.rol_tareas, direccion: u.direccion_tareas, subdireccion: u.subdireccion_tareas || '', puesto: u.puesto || '' }),
     },
     tareas2: {
       secret: TAREAS_SECRET,
       check: () => u.acceso_tareas,
-      payload: () => ({ email: u.email, name: u.nombre, role: u.rol_tareas, direccion: u.direccion_tareas, puesto: u.puesto || '' }),
+      payload: () => ({ email: u.email, name: u.nombre, role: u.rol_tareas, direccion: u.direccion_tareas, subdireccion: u.subdireccion_tareas || '', puesto: u.puesto || '' }),
     },
     oficios: {
       secret: OFICIOS_SECRET,
@@ -415,14 +416,14 @@ app.get('/api/sso/:app', auth, (req, res) => {
 /* ── Usuarios (admin) ───────────────────────────────────────────────────── */
 app.get('/api/usuarios', auth, adminOnly, (_req, res) => {
   const rows = db.prepare(
-    'SELECT id,nombre,email,rol,puesto,acceso_tareas,rol_tareas,direccion_tareas,acceso_oficios,rol_oficios,area_oficios,acceso_diligencias,rol_diligencias,area_diligencias,acceso_relevantes,rol_relevantes,direccion_relevantes,subdireccion_relevantes,acceso_criterios,rol_criterios,materia_criterios,activo,created_at FROM usuarios ORDER BY nombre'
+    'SELECT id,nombre,email,rol,puesto,acceso_tareas,rol_tareas,direccion_tareas,subdireccion_tareas,acceso_oficios,rol_oficios,area_oficios,acceso_diligencias,rol_diligencias,area_diligencias,acceso_relevantes,rol_relevantes,direccion_relevantes,subdireccion_relevantes,acceso_criterios,rol_criterios,materia_criterios,activo,created_at FROM usuarios ORDER BY nombre'
   ).all()
   res.json(rows.map(u => ({ ...u, acceso_tareas: !!u.acceso_tareas, acceso_oficios: !!u.acceso_oficios, acceso_diligencias: !!u.acceso_diligencias, acceso_relevantes: !!u.acceso_relevantes, acceso_criterios: !!u.acceso_criterios, activo: !!u.activo })))
 })
 
 app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
   const { nombre, email, rol = 'usuario', puesto = '',
-    acceso_tareas = false, rol_tareas = '', direccion_tareas = '',
+    acceso_tareas = false, rol_tareas = '', direccion_tareas = '', subdireccion_tareas = '',
     acceso_oficios = false, rol_oficios = 'usuario', area_oficios = '',
     acceso_diligencias = false, rol_diligencias = 'usuario', area_diligencias = '',
     acceso_relevantes = false, rol_relevantes = 'usuario', direccion_relevantes = '', subdireccion_relevantes = '',
@@ -435,15 +436,15 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     const r = db.prepare(`
       INSERT INTO usuarios (nombre,email,password_hash,rol,puesto,
-        acceso_tareas,rol_tareas,direccion_tareas,
+        acceso_tareas,rol_tareas,direccion_tareas,subdireccion_tareas,
         acceso_oficios,rol_oficios,area_oficios,
         acceso_diligencias,rol_diligencias,area_diligencias,
         acceso_relevantes,rol_relevantes,direccion_relevantes,subdireccion_relevantes,
         acceso_criterios,rol_criterios,materia_criterios,
         reset_token,reset_token_expires,primer_acceso)
-      VALUES (?,?,?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?,?, ?,?,?, ?,?,?)
+      VALUES (?,?,?,?,?, ?,?,?,?, ?,?,?, ?,?,?, ?,?,?,?, ?,?,?, ?,?,?)
     `).run(nombre, email.toLowerCase(), hash, rol, puesto,
-           acceso_tareas ? 1 : 0, rol_tareas, direccion_tareas,
+           acceso_tareas ? 1 : 0, rol_tareas, direccion_tareas, subdireccion_tareas,
            acceso_oficios ? 1 : 0, rol_oficios, area_oficios,
            acceso_diligencias ? 1 : 0, rol_diligencias, area_diligencias,
            acceso_relevantes ? 1 : 0, rol_relevantes, direccion_relevantes, subdireccion_relevantes,
@@ -471,7 +472,7 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
 
 app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   const { nombre, email, password, rol, puesto,
-    acceso_tareas, rol_tareas, direccion_tareas,
+    acceso_tareas, rol_tareas, direccion_tareas, subdireccion_tareas,
     acceso_oficios, rol_oficios, area_oficios,
     acceso_diligencias, rol_diligencias, area_diligencias,
     acceso_relevantes, rol_relevantes, direccion_relevantes, subdireccion_relevantes,
@@ -481,7 +482,7 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
   const hash = password ? bcrypt.hashSync(password, 10) : u.password_hash
   db.prepare(`
     UPDATE usuarios SET nombre=?,email=?,password_hash=?,rol=?,puesto=?,
-      acceso_tareas=?,rol_tareas=?,direccion_tareas=?,
+      acceso_tareas=?,rol_tareas=?,direccion_tareas=?,subdireccion_tareas=?,
       acceso_oficios=?,rol_oficios=?,area_oficios=?,
       acceso_diligencias=?,rol_diligencias=?,area_diligencias=?,
       acceso_relevantes=?,rol_relevantes=?,direccion_relevantes=?,subdireccion_relevantes=?,
@@ -489,7 +490,7 @@ app.put('/api/usuarios/:id', auth, adminOnly, (req, res) => {
     WHERE id=?
   `).run(nombre ?? u.nombre, (email ?? u.email).toLowerCase(), hash, rol ?? u.rol, puesto ?? u.puesto ?? '',
          acceso_tareas != null ? (acceso_tareas ? 1 : 0) : u.acceso_tareas,
-         rol_tareas ?? u.rol_tareas, direccion_tareas ?? u.direccion_tareas,
+         rol_tareas ?? u.rol_tareas, direccion_tareas ?? u.direccion_tareas, subdireccion_tareas ?? u.subdireccion_tareas ?? '',
          acceso_oficios != null ? (acceso_oficios ? 1 : 0) : u.acceso_oficios,
          rol_oficios ?? u.rol_oficios, area_oficios ?? u.area_oficios ?? '',
          acceso_diligencias != null ? (acceso_diligencias ? 1 : 0) : u.acceso_diligencias,

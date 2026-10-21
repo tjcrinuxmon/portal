@@ -22,6 +22,20 @@ const ROLES_TAREAS = [
   { key: 'secretaria',  label: 'Secretaría Particular',            color: '#EC4899' },
 ]
 
+// Subdirecciones de Seguimiento por dirección. Las claves DEBEN coincidir con
+// seguimiento/src/rubros.js y permisos() de seguimiento/server.js: un Subdirector/a solo ve
+// la suya. Las direcciones que no están aquí usan el Catálogo de Subdirecciones (solo texto).
+const SEG_SUBDIRECCIONES = {
+  asuntos_laborales: [
+    { key: 'litigio',  label: 'Subdirección de Litigio' },
+    { key: 'recursos', label: 'Subdirección de Recursos y Consultas' },
+  ],
+  contratos_convenios: [
+    { key: 'convenios', label: 'Subdirección de Convenios' },
+    { key: 'contratos', label: 'Subdirección de Contratos' },
+  ],
+}
+
 const ROLES_DILIGENCIAS = [
   { key: 'usuario',     label: 'Usuario' },
   { key: 'notificador', label: 'Notificador' },
@@ -177,7 +191,7 @@ function AppBadge({ label, color }) {
 const EMPTY = {
   nombre: '', email: '', password: '',
   rol: 'usuario', puesto: '', activo: true,
-  acceso_tareas: false, rol_tareas: 'director', direccion_tareas: '',
+  acceso_tareas: false, rol_tareas: 'director', direccion_tareas: '', subdireccion_tareas: '',
   acceso_diligencias: false, rol_diligencias: 'usuario', area_diligencias: '',
   acceso_oficios: false, rol_oficios: 'usuario', area_oficios: '',
   acceso_relevantes: false, rol_relevantes: 'usuario', direccion_relevantes: '', subdireccion_relevantes: '',
@@ -196,6 +210,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     acceso_tareas:      !!user.acceso_tareas,
     rol_tareas:         user.rol_tareas       || 'director',
     direccion_tareas:   user.direccion_tareas || '',
+    subdireccion_tareas: user.subdireccion_tareas || '',
     acceso_diligencias: !!user.acceso_diligencias,
     rol_diligencias:    user.rol_diligencias  || 'usuario',
     area_diligencias:   user.area_diligencias || '',
@@ -220,6 +235,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
     : '#6B7280'
 
   const dirSubs = subdirecciones.filter(s => s.direccion_key === f.direccion_tareas)
+  const segSubs = SEG_SUBDIRECCIONES[f.direccion_tareas]
 
   const handleSubmit = async () => {
     if (!f.nombre.trim() || !f.email.trim()) { setError('Nombre y correo son obligatorios'); return }
@@ -229,6 +245,11 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
       if (!data.password) delete data.password
       if (!f.acceso_tareas || !needsDireccion(f.rol_tareas)) data.direccion_tareas = ''
       if (!f.acceso_tareas || !needsPuesto(f.rol_tareas))    data.puesto = ''
+      if (!f.acceso_tareas || !needsPuesto(f.rol_tareas) || !segSubs) data.subdireccion_tareas = ''
+      if (data.subdireccion_tareas) data.puesto = segSubs.find(s => s.key === data.subdireccion_tareas)?.label || data.puesto
+      if (f.acceso_tareas && needsPuesto(f.rol_tareas) && segSubs && !data.subdireccion_tareas) {
+        setError('Elige la subdirección: un Subdirector/a solo ve en Seguimiento lo de su subdirección'); setSaving(false); return
+      }
       if (isEdit) await updateUsuario(user.id, data)
       else        await createUsuario(data)
       onSaved()
@@ -349,7 +370,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
                 {needsDireccion(f.rol_tareas) && (
                   <div>
                     <label className="ine-label">Dirección de Área / Coordinación</label>
-                    <select className="ine-input" value={f.direccion_tareas} onChange={e => set('direccion_tareas', e.target.value)}>
+                    <select className="ine-input" value={f.direccion_tareas} onChange={e => { set('direccion_tareas', e.target.value); set('subdireccion_tareas', '') }}>
                       {DIRECCIONES.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
                     </select>
                   </div>
@@ -357,7 +378,15 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
                 {needsPuesto(f.rol_tareas) && (
                   <div className="col-span-2">
                     <label className="ine-label">Subdirección</label>
-                    {dirSubs.length > 0 ? (
+                    {segSubs ? (
+                      <>
+                        <select className="ine-input" value={f.subdireccion_tareas} onChange={e => set('subdireccion_tareas', e.target.value)}>
+                          <option value="">— Seleccionar subdirección —</option>
+                          {segSubs.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                        </select>
+                        <p className="text-xs text-ine-muted mt-1">En Seguimiento solo verá lo de esta subdirección.</p>
+                      </>
+                    ) : dirSubs.length > 0 ? (
                       <select className="ine-input" value={f.puesto} onChange={e => set('puesto', e.target.value)}>
                         <option value="">— Seleccionar subdirección —</option>
                         {dirSubs.map(s => <option key={s.id} value={s.nombre}>{s.nombre}</option>)}
@@ -366,7 +395,7 @@ function UserModal({ user, onSaved, onClose, subdirecciones = [] }) {
                       <input className="ine-input" value={f.puesto} onChange={e => set('puesto', e.target.value)}
                         placeholder="Ej. Subdirector/a de Resoluciones y Análisis" />
                     )}
-                    {dirSubs.length === 0 && (
+                    {!segSubs && dirSubs.length === 0 && (
                       <p className="text-xs text-ine-muted mt-1">
                         No hay subdirecciones para esta dirección. Cierra este formulario y ve al <strong>Catálogo de Subdirecciones</strong> al final de la página para agregarlas.
                       </p>
