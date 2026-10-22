@@ -278,21 +278,45 @@ const APP_URLS = {
 app.use(helmet({ contentSecurityPolicy: false }))
 app.use(cors({
   origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
+  exposedHeaders: ['X-Nuevo-Token'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
 }))
 app.use(express.json())
 
 /* ── Auth middleware ────────────────────────────────────────────────────── */
+// Sesión: vence tras SESION sin actividad. Cada petición con más de RENOVAR_CADA desde que se
+// firmó el token recibe uno nuevo en el encabezado X-Nuevo-Token (con los datos actuales del
+// usuario), así que mientras se use el sistema la sesión no vence. Los módulos también piden
+// la renovación (GET /api/auth/me) mientras se trabaja en ellos.
+const SESION = '8h'
+const RENOVAR_CADA = 15 * 60   // segundos
+const datosUsuario = (u) => ({ id: u.id, email: u.email, nombre: u.nombre, rol: u.rol, puesto: u.puesto || '',
+      acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas, subdireccion_tareas: u.subdireccion_tareas || '',
+      acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
+      acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
+      acceso_relevantes: !!u.acceso_relevantes, rol_relevantes: u.rol_relevantes, direccion_relevantes: u.direccion_relevantes, subdireccion_relevantes: u.subdireccion_relevantes,
+      acceso_criterios: !!u.acceso_criterios, rol_criterios: u.rol_criterios, materia_criterios: u.materia_criterios,
+    })
+const firmarSesion = (u) => jwt.sign(datosUsuario(u), PORTAL_SECRET, { expiresIn: SESION })
+
 function auth(req, res, next) {
   const h = req.headers.authorization
   if (!h?.startsWith('Bearer ')) return res.status(401).json({ error: 'No autenticado' })
+  let payload
   try {
-    req.user = jwt.verify(h.slice(7), PORTAL_SECRET)
-    next()
+    payload = jwt.verify(h.slice(7), PORTAL_SECRET)
   } catch {
-    res.status(401).json({ error: 'Token inválido' })
+    return res.status(401).json({ error: 'Token inválido' })
   }
+  req.user = payload
+  if (Date.now() / 1000 - (payload.iat || 0) > RENOVAR_CADA) {
+    const u = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(payload.id)
+    if (!u || !u.activo) return res.status(401).json({ error: 'Usuario inactivo' })
+    res.set('X-Nuevo-Token', firmarSesion(u))
+    req.user = datosUsuario(u)
+  }
+  next()
 }
 function adminOnly(req, res, next) {
   if (req.user?.rol !== 'admin') return res.status(403).json({ error: 'Sin permiso' })
@@ -327,16 +351,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
     return res.status(401).json({ error: 'Credenciales incorrectas' })
 
   db.prepare('UPDATE usuarios SET primer_acceso = 0 WHERE id = ?').run(u.id)
-  const token = jwt.sign(
-    { id: u.id, email: u.email, nombre: u.nombre, rol: u.rol, puesto: u.puesto || '',
-      acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas, subdireccion_tareas: u.subdireccion_tareas || '',
-      acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,
-      acceso_diligencias: !!u.acceso_diligencias, rol_diligencias: u.rol_diligencias, area_diligencias: u.area_diligencias,
-      acceso_relevantes: !!u.acceso_relevantes, rol_relevantes: u.rol_relevantes, direccion_relevantes: u.direccion_relevantes, subdireccion_relevantes: u.subdireccion_relevantes,
-      acceso_criterios: !!u.acceso_criterios, rol_criterios: u.rol_criterios, materia_criterios: u.materia_criterios,
-    },
-    PORTAL_SECRET, { expiresIn: '8h' }
-  )
+  const token = firmarSesion(u)
   res.json({ token, user: { id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, puesto: u.puesto || '',
     acceso_tareas: !!u.acceso_tareas, rol_tareas: u.rol_tareas, direccion_tareas: u.direccion_tareas, subdireccion_tareas: u.subdireccion_tareas || '',
     acceso_oficios: !!u.acceso_oficios, rol_oficios: u.rol_oficios,

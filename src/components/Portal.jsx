@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { getSsoToken } from '../api.js'
 
 const APPS = [
@@ -84,22 +84,30 @@ const ACCESS_KEY = {
   criterios:   'acceso_criterios',
 }
 
-export default function Portal({ user, onLogout, onManageUsers }) {
+export default function Portal({ user, onLogout, onManageUsers, destino, onDestinoUsado }) {
   const [loading, setLoading] = useState(null)
   const [error,   setError]   = useState(null)
 
   const accessible = APPS.filter(a => user[ACCESS_KEY[a.key]])
 
-  const handleAccess = async (appKey) => {
+  // ruta: pantalla del módulo a la que se vuelve (#/…), si se llegó aquí desde un módulo
+  const handleAccess = async (appKey, ruta = '') => {
     setLoading(appKey); setError(null)
     try {
       const { token, url } = await getSsoToken(appKey)
-      window.location.href = `${url}?sso_token=${token}`
+      window.location.href = `${url}?sso_token=${token}${ruta}`
     } catch (e) {
       setError(e?.response?.data?.error || 'Error al conectar con el sistema.')
       setLoading(null)
     }
   }
+
+  // Llegó desde un módulo cuya sesión venció: volver a entrar a él (si tiene acceso)
+  useEffect(() => {
+    if (!destino) return
+    onDestinoUsado?.()
+    if (accessible.some(a => a.key === destino.ir)) handleAccess(destino.ir, destino.ruta)
+  }, [])
 
   return (
     <div className="min-h-screen bg-ine-bg flex flex-col">

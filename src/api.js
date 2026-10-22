@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getToken, clearAuth } from './auth.js'
+import { getToken, clearAuth, renovarAuth } from './auth.js'
 
 const api = axios.create({ baseURL: '/api', timeout: 15000 })
 
@@ -8,7 +8,11 @@ api.interceptors.request.use(cfg => {
   if (t) cfg.headers.Authorization = `Bearer ${t}`
   return cfg
 })
-api.interceptors.response.use(r => r, err => {
+api.interceptors.response.use(r => {
+  const nuevo = r.headers?.['x-nuevo-token']
+  if (nuevo) renovarAuth(nuevo)
+  return r
+}, err => {
   if (err.response?.status === 401) { clearAuth(); window.location.reload() }
   return Promise.reject(err)
 })
