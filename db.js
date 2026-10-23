@@ -40,6 +40,10 @@ try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_token TEXT") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_token_expires TEXT") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code TEXT") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code_expires TEXT") } catch (_) {}
+// Intentos fallidos del código de recuperación vigente (al 5.º se invalida el código).
+try { db.exec("ALTER TABLE usuarios ADD COLUMN reset_code_intentos INTEGER DEFAULT 0") } catch (_) {}
+// Los códigos de antes se guardaban en claro (6 dígitos); ahora se guarda su SHA-256 (64 caracteres).
+db.prepare("UPDATE usuarios SET reset_code = NULL, reset_code_expires = NULL WHERE reset_code IS NOT NULL AND length(reset_code) <> 64").run()
 try { db.exec("ALTER TABLE usuarios ADD COLUMN primer_acceso INTEGER DEFAULT 0") } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN area_oficios TEXT DEFAULT ''") } catch (_) {}
 

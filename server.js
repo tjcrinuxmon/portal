@@ -314,6 +314,23 @@ const loginLimiter = rateLimit({
   message: { error: 'Demasiados intentos. Espera 15 minutos.' },
 })
 
+/* Códigos y tokens de recuperación: se guardan como SHA-256 (nunca en claro) y se comparan
+   en tiempo constante. El código se invalida al 5.º intento fallido, así que adivinarlo
+   (900 000 combinaciones) no es viable aunque el límite por IP no distinga clientes. */
+const sha256 = (s) => crypto.createHash('sha256').update(String(s)).digest('hex')
+const mismoHash = (a, b) => !!a && !!b && a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b))
+const MAX_INTENTOS_CODIGO = 5
+
+// Por correo: frena el envío masivo de códigos a una misma cuenta.
+const forgotLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `forgot::${String(req.body?.email || '').trim().toLowerCase()}`,
+  message: { error: 'Ya se enviaron varios códigos a este correo. Espera una hora e inténtalo de nuevo.' },
+})
+
 /* ── POST /api/auth/login ───────────────────────────────────────────────── */
 app.post('/api/auth/login', loginLimiter, (req, res) => {
   const { email, password } = req.body
@@ -446,7 +463,7 @@ app.post('/api/usuarios', auth, adminOnly, async (req, res) => {
            acceso_diligencias ? 1 : 0, rol_diligencias, area_diligencias,
            acceso_relevantes ? 1 : 0, rol_relevantes, direccion_relevantes, subdireccion_relevantes,
            acceso_criterios ? 1 : 0, rol_criterios, materia_criterios,
-           resetToken, expires, 1)
+           sha256(resetToken), expires, 1)
     const created = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(r.lastInsertRowid)
     syncToTareas(created)
     syncToDiligencias(created)
@@ -537,15 +554,15 @@ app.delete('/api/usuarios/:id', auth, adminOnly, (req, res) => {
 })
 
 /* ── Recuperación de contraseña (forgot password) ───────────────────────── */
-app.post('/api/auth/forgot-password', async (req, res) => {
+app.post('/api/auth/forgot-password', forgotLimiter, async (req, res) => {
   const { email } = req.body
-  if (!email) return res.status(400).json({ error: 'Ingresa tu correo' })
+  if (!email || typeof email !== 'string') return res.status(400).json({ error: 'Ingresa tu correo' })
   const u = db.prepare('SELECT id, nombre, email, activo FROM usuarios WHERE email = ?').get(email.trim().toLowerCase())
   // Respuesta genérica para no revelar si el correo existe
   if (!u || !u.activo) return res.json({ ok: true })
-  const code = String(Math.floor(100000 + Math.random() * 900000))
+  const code = String(crypto.randomInt(100000, 1000000))
   const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString()
-  db.prepare('UPDATE usuarios SET reset_code = ?, reset_code_expires = ? WHERE id = ?').run(code, expires, u.id)
+  db.prepare('UPDATE usuarios SET reset_code = ?, reset_code_expires = ?, reset_code_intentos = 0 WHERE id = ?').run(sha256(code), expires, u.id)
   try {
     await sendResetCode({ nombre: u.nombre, email: u.email, code })
     log(`RESET CODE OK → código enviado a ${u.email}`)
@@ -557,27 +574,39 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
 app.post('/api/auth/verify-code', (req, res) => {
   const { email, code } = req.body
-  log(`VERIFY CODE → email=${email} code=${code}`)
-  if (!email || !code) return res.status(400).json({ error: 'Faltan datos' })
-  const u = db.prepare('SELECT id, reset_code, reset_code_expires FROM usuarios WHERE email = ?').get(email.trim().toLowerCase())
-  if (!u || u.reset_code !== String(code)) {
-    log(`VERIFY CODE FAIL → código incorrecto o usuario no encontrado`)
+  if (!email || !code || typeof email !== 'string') return res.status(400).json({ error: 'Faltan datos' })
+  const u = db.prepare('SELECT id, reset_code, reset_code_expires, reset_code_intentos FROM usuarios WHERE email = ? AND activo = 1').get(email.trim().toLowerCase())
+  if (!u || !u.reset_code) {
+    log(`VERIFY CODE FAIL → sin código vigente`)
     return res.status(400).json({ error: 'Código incorrecto' })
   }
+  const limpiarCodigo = db.prepare('UPDATE usuarios SET reset_code = NULL, reset_code_expires = NULL, reset_code_intentos = 0 WHERE id = ?')
   if (new Date(u.reset_code_expires) < new Date()) {
-    log(`VERIFY CODE FAIL → código expirado`)
+    limpiarCodigo.run(u.id)
+    log(`VERIFY CODE FAIL → código expirado (id=${u.id})`)
     return res.status(400).json({ error: 'El código ha expirado' })
+  }
+  if (!mismoHash(sha256(String(code).trim()), u.reset_code)) {
+    const intentos = (u.reset_code_intentos || 0) + 1
+    if (intentos >= MAX_INTENTOS_CODIGO) {
+      limpiarCodigo.run(u.id)
+      log(`VERIFY CODE FAIL → código invalidado tras ${intentos} intentos (id=${u.id})`)
+      return res.status(400).json({ error: 'Demasiados intentos. Solicita un código nuevo.' })
+    }
+    db.prepare('UPDATE usuarios SET reset_code_intentos = ? WHERE id = ?').run(intentos, u.id)
+    log(`VERIFY CODE FAIL → código incorrecto (id=${u.id}, intento ${intentos})`)
+    return res.status(400).json({ error: 'Código incorrecto' })
   }
   const resetTok = crypto.randomBytes(32).toString('hex')
   const tokenExpires = new Date(Date.now() + 30 * 60 * 1000).toISOString()
-  db.prepare('UPDATE usuarios SET reset_token = ?, reset_token_expires = ?, reset_code = NULL, reset_code_expires = NULL WHERE id = ?').run(resetTok, tokenExpires, u.id)
-  log(`VERIFY CODE OK → reset_token generado para ${email}`)
+  db.prepare('UPDATE usuarios SET reset_token = ?, reset_token_expires = ?, reset_code = NULL, reset_code_expires = NULL, reset_code_intentos = 0 WHERE id = ?').run(sha256(resetTok), tokenExpires, u.id)
+  log(`VERIFY CODE OK → reset_token generado (id=${u.id})`)
   res.json({ token: resetTok })
 })
 
 /* ── Reset de contraseña ────────────────────────────────────────────────── */
 app.get('/api/auth/reset-password/:token', (req, res) => {
-  const u = db.prepare('SELECT id, nombre, email, reset_token_expires FROM usuarios WHERE reset_token = ?').get(req.params.token)
+  const u = db.prepare('SELECT id, nombre, email, reset_token_expires FROM usuarios WHERE reset_token = ?').get(sha256(req.params.token))
   if (!u) return res.status(400).json({ error: 'Enlace inválido o expirado' })
   if (new Date(u.reset_token_expires) < new Date()) return res.status(400).json({ error: 'El enlace ha expirado' })
   res.json({ nombre: u.nombre, email: u.email })
@@ -585,11 +614,10 @@ app.get('/api/auth/reset-password/:token', (req, res) => {
 
 app.post('/api/auth/reset-password', (req, res) => {
   const { token, password } = req.body
-  log(`RESET PASSWORD → token=${token ? token.slice(0,8) + '...' : 'VACÍO'} pass_len=${password?.length}`)
-  if (!token || !password) return res.status(400).json({ error: 'Faltan datos' })
+  if (!token || !password || typeof token !== 'string') return res.status(400).json({ error: 'Faltan datos' })
   const passError = validatePassword(password)
   if (passError) return res.status(400).json({ error: passError })
-  const u = db.prepare('SELECT id, reset_token_expires FROM usuarios WHERE reset_token = ?').get(token)
+  const u = db.prepare('SELECT id, reset_token_expires FROM usuarios WHERE reset_token = ?').get(sha256(token))
   if (!u) { log(`RESET PASSWORD FAIL → token no encontrado en DB`); return res.status(400).json({ error: 'Enlace inválido o expirado' }) }
   if (new Date(u.reset_token_expires) < new Date()) { log(`RESET PASSWORD FAIL → token expirado`); return res.status(400).json({ error: 'El enlace ha expirado' }) }
   const hash = bcrypt.hashSync(password, 10)
